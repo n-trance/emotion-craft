@@ -2505,6 +2505,7 @@ export const App = () => {
     new Set()
   );
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null);
+  const [selectedEmotionPopup, setSelectedEmotionPopup] = useState<string | null>(null);
   const [triedCombinations, setTriedCombinations] = useState<Set<string>>(
     new Set()
   );
@@ -2515,13 +2516,17 @@ export const App = () => {
   const [selectedDimensionValues, setSelectedDimensionValues] = useState<{
     [dimension in DimensionType]?: string;
   }>({});
-  const [hoveredDimension, setHoveredDimension] =
+  const [selectedDimensionModal, setSelectedDimensionModal] =
     useState<DimensionType | null>(null);
   const [dimensionsExpanded, setDimensionsExpanded] = useState(false);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
   const [hoveredTypeFilter, setHoveredTypeFilter] = useState(false);
-  const [hoveredEmotionsLabel, setHoveredEmotionsLabel] = useState(false);
-  const [hoveredFeelingsLabel, setHoveredFeelingsLabel] = useState(false);
+  const [showEmotionsModal, setShowEmotionsModal] = useState(false);
+  const [showFeelingsModal, setShowFeelingsModal] = useState(false);
+  const [showStatesModal, setShowStatesModal] = useState(false);
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"alphabetical" | "available">("alphabetical");
+  const [showCombinableIndicators, setShowCombinableIndicators] = useState<boolean>(true);
   const autoCombineTriggered = useRef(false);
   const craftingAreaRef = useRef<HTMLDivElement>(null);
   const resultDisplayRef = useRef<HTMLDivElement>(null);
@@ -2738,6 +2743,10 @@ export const App = () => {
     }
     
     // Craft mode: Add emotion to crafting slots
+    // Prevent adding emotion if it's already in crafting slots
+    if (craftingSlots.includes(emotion)) {
+      return;
+    }
     const newSlots = [...craftingSlots, emotion];
     setCraftingSlots(newSlots);
     setLastResult(null);
@@ -2747,14 +2756,6 @@ export const App = () => {
     // Set recently added for animation
     setRecentlyAddedEmotion(emotion);
     setTimeout(() => setRecentlyAddedEmotion(null), 600);
-
-    // Scroll to crafting area smoothly
-    setTimeout(() => {
-      craftingAreaRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'nearest' 
-      });
-    }, 100);
 
     // Reset auto-combine trigger when adding first emotion
     if (craftingSlots.length === 0) {
@@ -2775,6 +2776,10 @@ export const App = () => {
     setHoveredEmotion(emotion);
     // When hovering, show what combines with the hovered emotion
     // But if we have crafting slots, restore to showing what combines with all slots when leaving
+  };
+
+  const closeEmotionPopup = () => {
+    setSelectedEmotionPopup(null);
   };
 
   const handleEmotionLeave = () => {
@@ -2825,12 +2830,16 @@ export const App = () => {
     setCraftingSlots([]);
     setHasAttemptedCombine(false);
     
-    // Scroll to result display
+    // Always scroll to result display when viewing details
     setTimeout(() => {
-      resultDisplayRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'nearest' 
-      });
+      if (resultDisplayRef.current) {
+        const elementTop = resultDisplayRef.current.offsetTop;
+        const offset = 80; // Extra space at the top
+        window.scrollTo({
+          top: elementTop - offset,
+          behavior: 'smooth'
+        });
+      }
     }, 100);
   };
 
@@ -2932,6 +2941,18 @@ export const App = () => {
       clearHighlight();
       setHasAttemptedCombine(false);
       autoCombineTriggered.current = false;
+
+      // Scroll to result display after combining with extra top spacing
+      setTimeout(() => {
+        if (resultDisplayRef.current) {
+          const elementTop = resultDisplayRef.current.offsetTop;
+          const offset = 80; // Extra space at the top
+          window.scrollTo({
+            top: elementTop - offset,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     } else {
       setLastResult(null);
       setLastCombination([]);
@@ -3078,10 +3099,17 @@ export const App = () => {
     let filtered = emotions;
 
     // Apply type filter (emotion/feeling/state)
+    // Keep emotions and feelings in the same card - show both when filtering by either
     if (typeFilter !== "all") {
-      filtered = filtered.filter(
-        (emotion) => getItemType(emotion) === typeFilter
-      );
+      filtered = filtered.filter((emotion) => {
+        const itemType = getItemType(emotion);
+        // If filtering by "emotion" or "feeling", show both emotions and feelings
+        if (typeFilter === "emotion" || typeFilter === "feeling") {
+          return itemType === "emotion" || itemType === "feeling";
+        }
+        // For "state", only show states
+        return itemType === typeFilter;
+      });
     }
 
     // Apply dimension value filters
@@ -3118,16 +3146,44 @@ export const App = () => {
     return filtered;
   };
 
-  // Always show all base emotions (excluding those in crafting slots)
-  const filteredBaseEmotions = BASE_EMOTIONS.filter(
-    (e) => !craftingSlots.includes(e)
-  );
+  // Always show all base emotions (they'll fade out when in crafting slots)
+  const filteredBaseEmotions = BASE_EMOTIONS;
   const filteredDiscoveredEmotions = allEmotions.filter(
-    (e) => !BASE_EMOTIONS.includes(e) && !craftingSlots.includes(e)
+    (e) => !BASE_EMOTIONS.includes(e)
   );
 
-  const baseEmotionsList = filterEmotions(filteredBaseEmotions);
-  const discoveredEmotionsList = filterEmotions(filteredDiscoveredEmotions);
+  const baseEmotionsListFiltered = filterEmotions(filteredBaseEmotions);
+  const discoveredEmotionsListFiltered = filterEmotions(filteredDiscoveredEmotions);
+
+  // Apply sorting
+  const sortEmotions = (emotions: string[]): string[] => {
+    if (sortOrder === "alphabetical") {
+      return [...emotions].sort((a, b) => a.localeCompare(b));
+    } else {
+      // Available: combinable items first, then unavailable, then alphabetical within each group
+      return [...emotions].sort((a, b) => {
+        const aInSlots = craftingSlots.includes(a);
+        const aCombinable = combinableEmotions.has(a);
+        const aAvailable = craftingSlots.length === 0 || aInSlots || aCombinable;
+        
+        const bInSlots = craftingSlots.includes(b);
+        const bCombinable = combinableEmotions.has(b);
+        const bAvailable = craftingSlots.length === 0 || bInSlots || bCombinable;
+        
+        if (aAvailable && !bAvailable) return -1;
+        if (!aAvailable && bAvailable) return 1;
+        // If both available or both unavailable, sort alphabetically
+        return a.localeCompare(b);
+      });
+    }
+  };
+
+  const baseEmotionsList = sortEmotions(baseEmotionsListFiltered);
+  const discoveredEmotionsList = sortEmotions(discoveredEmotionsListFiltered);
+  
+  // Separate feelings from states
+  const feelingsList = sortEmotions(discoveredEmotionsList.filter((e) => getItemType(e) === "feeling"));
+  const statesList = sortEmotions(discoveredEmotionsList.filter((e) => getItemType(e) === "state"));
 
   return (
     <div className="App">
@@ -3199,6 +3255,31 @@ export const App = () => {
               >
                 Craft
               </button>
+              <button
+                onClick={resetProgress}
+                className="reset-button"
+                style={{
+                  padding: "0.5rem 1rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  border: "1px solid #ef4444",
+                  borderRadius: "6px",
+                  backgroundColor: "#ffffff",
+                  color: "#ef4444",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#fef2f2";
+                  e.currentTarget.style.borderColor = "#dc2626";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.borderColor = "#ef4444";
+                }}
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
@@ -3221,6 +3302,13 @@ export const App = () => {
                   } as React.CSSProperties}
                 >
                   {emotion}
+                  <button
+                    className="remove-button"
+                    onClick={() => removeSlot(index)}
+                    aria-label="Remove emotion"
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
             </div>
@@ -3475,7 +3563,11 @@ export const App = () => {
                       </div>
                       <div className="result-dimensions-tags">
                         {/* Add Type as first dimension */}
-                        <span className="result-dimension-tag">
+                        <span 
+                          className="result-dimension-tag"
+                          onClick={() => setShowTypeModal(true)}
+                          style={{ cursor: "pointer" }}
+                        >
                           <span className="dimension-name">Type:</span>{" "}
                           <span className="dimension-value">
                             {itemType.charAt(0).toUpperCase() + itemType.slice(1)}
@@ -3608,7 +3700,7 @@ export const App = () => {
                         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
                         zIndex: 1000,
                         pointerEvents: "none",
-                        maxWidth: "360px",
+                        maxWidth: "500px",
                         whiteSpace: "normal",
                         wordWrap: "break-word",
                       }}
@@ -3713,11 +3805,10 @@ export const App = () => {
                       >
                         {getDimensionDisplayName(dimension)}
                       </label>
-                      <span
-                        onMouseEnter={() => setHoveredDimension(dimension)}
-                        onMouseLeave={() => setHoveredDimension(null)}
+                      <button
+                        onClick={() => setSelectedDimensionModal(dimension)}
                         style={{
-                          cursor: "help",
+                          cursor: "pointer",
                           fontSize: "0.7rem",
                           color: "#94a3b8",
                           width: "14px",
@@ -3728,43 +3819,21 @@ export const App = () => {
                           alignItems: "center",
                           justifyContent: "center",
                           lineHeight: 1,
+                          background: "transparent",
+                          padding: 0,
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "#667eea";
+                          e.currentTarget.style.color = "#667eea";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "#94a3b8";
+                          e.currentTarget.style.color = "#94a3b8";
                         }}
                       >
                         ?
-                      </span>
-                      {hoveredDimension === dimension && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: "100%",
-                            left: 0,
-                            marginBottom: "8px",
-                            background: "#0f172a",
-                            color: "white",
-                            padding: "0.875rem 1rem",
-                            borderRadius: "6px",
-                            fontSize: "0.8125rem",
-                            lineHeight: 1.6,
-                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                            zIndex: 1000,
-                            pointerEvents: "none",
-                            maxWidth: "400px",
-                            whiteSpace: "normal",
-                            wordWrap: "break-word",
-                          }}
-                        >
-                          {DIMENSION_TOOLTIPS[dimension]}
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: "20px",
-                              border: "6px solid transparent",
-                              borderTopColor: "#0f172a",
-                            }}
-                          />
-                        </div>
-                      )}
+                      </button>
                     </div>
                     <div
                       style={{
@@ -3838,76 +3907,45 @@ export const App = () => {
                 position: "relative",
               }}
             >
-              <h2>Emotions</h2>
-              <span
-                onMouseEnter={() => setHoveredEmotionsLabel(true)}
-                onMouseLeave={() => setHoveredEmotionsLabel(false)}
-                style={{
-                  cursor: "help",
-                  fontSize: "0.875rem",
-                  color: "#94a3b8",
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: "50%",
-                  border: "1px solid #94a3b8",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  lineHeight: 1,
-                }}
-              >
-                ?
-              </span>
-              {hoveredEmotionsLabel && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "100%",
-                    left: 0,
-                    marginBottom: "8px",
-                    background: "#0f172a",
-                    color: "white",
-                    padding: "0.875rem 1rem",
-                    borderRadius: "6px",
-                    fontSize: "0.8125rem",
-                    lineHeight: 1.6,
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                    zIndex: 1000,
-                    pointerEvents: "none",
-                    maxWidth: "420px",
-                    whiteSpace: "normal",
-                    wordWrap: "break-word",
-                  }}
-                >
-                  <div
-                    style={{
-                      marginBottom: "0.75rem",
-                      fontWeight: "600",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    Emotions
-                  </div>
-                  <div style={{ marginBottom: "0" }}>
-                    Emotions are complex psychological states that involve
-                    subjective experience, physiological responses, and
-                    behavioral expressions. They can manifest as feelings, which
-                    are the personal, subjective experience of emotions combined
-                    with individual context and meaning.
-                  </div>
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "20px",
-                      border: "6px solid transparent",
-                      borderTopColor: "#0f172a",
-                    }}
-                  />
-                </div>
-              )}
             </div>
             <div className="section-actions">
+              <div className="sort-controls" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.8125rem", color: "#64748b", fontWeight: "500" }}>Sort:</span>
+                <button
+                  className={`sort-button ${sortOrder === "alphabetical" ? "active" : ""}`}
+                  onClick={() => setSortOrder("alphabetical")}
+                  style={{
+                    padding: "0.375rem 0.75rem",
+                    fontSize: "0.8125rem",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "4px",
+                    backgroundColor: sortOrder === "alphabetical" ? "#667eea" : "#ffffff",
+                    color: sortOrder === "alphabetical" ? "#ffffff" : "#64748b",
+                    cursor: "pointer",
+                    fontWeight: "500",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  A-Z
+                </button>
+                <button
+                  className={`sort-button ${sortOrder === "available" ? "active" : ""}`}
+                  onClick={() => setSortOrder("available")}
+                  style={{
+                    padding: "0.375rem 0.75rem",
+                    fontSize: "0.8125rem",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "4px",
+                    backgroundColor: sortOrder === "available" ? "#667eea" : "#ffffff",
+                    color: sortOrder === "available" ? "#ffffff" : "#64748b",
+                    cursor: "pointer",
+                    fontWeight: "500",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Available
+                </button>
+              </div>
               <div className="legend-button-wrapper">
                 <button
                   className="legend-button"
@@ -3939,14 +3977,25 @@ export const App = () => {
                     <div className="legend-items">
                       <div className="legend-item">
                         <span className="legend-indicator combinable-indicator">
-                          +
+                          !
                         </span>
                         <span className="legend-text">
-                          Green + = Can combine to create new emotion (when
+                          ! = Can combine to create new emotion (when
                           selected) or can combine with other emotions (when not
                           selected)
                         </span>
                       </div>
+                    </div>
+                    <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.8125rem", color: "rgba(255, 255, 255, 0.9)" }}>
+                        <input
+                          type="checkbox"
+                          checked={showCombinableIndicators}
+                          onChange={(e) => setShowCombinableIndicators(e.target.checked)}
+                          style={{ cursor: "pointer" }}
+                        />
+                        Show combinable indicators
+                      </label>
                     </div>
                   </div>
                 )}
@@ -3959,32 +4008,60 @@ export const App = () => {
               <strong>{craftingSlots.join(", ")}</strong>
             </p>
           )}
-          <div className="emotions-grid">
+          <div style={{ marginBottom: "1.5rem" }}>
+            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              Emotions ({baseEmotionsList.length})
+              <button
+                onClick={() => setShowEmotionsModal(true)}
+                style={{
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  color: "#94a3b8",
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  border: "1px solid #94a3b8",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                  background: "transparent",
+                  padding: 0,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.color = "#667eea";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#94a3b8";
+                  e.currentTarget.style.color = "#94a3b8";
+                }}
+              >
+                ?
+              </button>
+            </h3>
+            <div className="emotions-grid">
             {baseEmotionsList
-              .filter((emotion) => {
-                // Hide emotions that can't be combined when items are in crafting slots
-                if (craftingSlots.length > 0) {
-                  const isInSlots = craftingSlots.includes(emotion);
-                  const isCombinable = combinableEmotions.has(emotion);
-                  return isInSlots || isCombinable;
-                }
-                return true;
-              })
                 .map((emotion) => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
                   const isHovered = hoveredEmotion === emotion;
                   const hasOptions = hasCombinableOptions(emotion);
+                  // Check if item should be faded out (selected items fade out, or not available when crafting)
+                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
+                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
 
                 return (
-                  <div key={emotion} className="emotion-wrapper">
+                  <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
                     <button
                       className={`base-emotion ${
                         isHighlighted ? "highlighted" : ""
                       } ${isCombinable ? "combinable" : ""} ${
                         isUnexplored ? "unexplored" : ""
-                      } ${hasOptions ? "has-options" : ""}`}
+                      } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                      disabled={isDisabled}
                       onClick={(e) => handleEmotionClick(emotion, e)}
                       onContextMenu={(e) => {
                         e.preventDefault();
@@ -3992,6 +4069,11 @@ export const App = () => {
                       }}
                       onMouseEnter={() => handleEmotionHover(emotion)}
                       onMouseLeave={handleEmotionLeave}
+                      onDoubleClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedEmotionPopup(emotion);
+                      }}
                       style={
                         {
                           "--emotion-color": getEmotionColor(emotion),
@@ -4025,30 +4107,30 @@ export const App = () => {
                         );
                         const isNew = result && !discoveredEmotions.has(result);
 
-                        if (result && isNew) {
-                          // Can combine to create new emotion - show green plus
+                        if (result && isNew && showCombinableIndicators) {
+                          // Can combine to create new emotion - show surprise symbol
                           return (
                             <span
                               className="emotion-badge combinable-badge"
                               title={`Can discover: ${result}`}
                             >
-                              +
+                              !
                             </span>
                           );
                         }
                         // Don't show badge if already tried/discovered
                       } else if (!isHighlighted) {
                         // When no emotion is highlighted, show badges based on combination options
-                        if (hasOptions) {
+                        if (hasOptions && showCombinableIndicators) {
                           const undiscovered = getUndiscoveredEmotions(emotion);
                           if (undiscovered.length > 0) {
-                            // Show green badge if can combine with other emotions to discover new ones
+                            // Show star badge if can combine with other emotions to discover new ones
                             return (
                               <span
                                 className="emotion-badge combinable-badge"
                                 title="Can combine with other emotions"
                               >
-                                +
+                                !
                               </span>
                             );
                           }
@@ -4058,36 +4140,18 @@ export const App = () => {
                       }
                       return null;
                     })()}
-                    {isHovered && (
-                      <div className="emotion-tooltip">
-                        <div className="tooltip-title">{emotion}</div>
-                        <div className="tooltip-description">
-                          {getFeelingDescription(emotion)}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
+            </div>
           </div>
-        </section>
-
-        <section className="section mixed-section">
-          <div className="section-header">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                position: "relative",
-              }}
-            >
-              <h2>Feelings ({discoveredEmotionsList.length})</h2>
-              <span
-                onMouseEnter={() => setHoveredFeelingsLabel(true)}
-                onMouseLeave={() => setHoveredFeelingsLabel(false)}
+          <div style={{ marginTop: "2rem" }}>
+            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              Feelings ({feelingsList.length})
+              <button
+                onClick={() => setShowFeelingsModal(true)}
                 style={{
-                  cursor: "help",
+                  cursor: "pointer",
                   fontSize: "0.875rem",
                   color: "#94a3b8",
                   width: "18px",
@@ -4098,102 +4162,44 @@ export const App = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   lineHeight: 1,
+                  background: "transparent",
+                  padding: 0,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.color = "#667eea";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#94a3b8";
+                  e.currentTarget.style.color = "#94a3b8";
                 }}
               >
                 ?
-              </span>
-              {hoveredFeelingsLabel && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "100%",
-                    left: 0,
-                    marginBottom: "8px",
-                    background: "#0f172a",
-                    color: "white",
-                    padding: "0.875rem 1rem",
-                    borderRadius: "6px",
-                    fontSize: "0.8125rem",
-                    lineHeight: 1.6,
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                    zIndex: 1000,
-                    pointerEvents: "none",
-                    maxWidth: "480px",
-                    whiteSpace: "normal",
-                    wordWrap: "break-word",
-                  }}
-                >
-                  <div
-                    style={{
-                      marginBottom: "0.75rem",
-                      fontWeight: "600",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    Feelings
-                  </div>
-                  <div style={{ marginBottom: "0.75rem" }}>
-                    Feelings are the subjective, personal experience of
-                    emotions. They represent how we interpret and experience
-                    emotions based on our individual context, memories, beliefs,
-                    and circumstances.
-                  </div>
-                  <div style={{ marginBottom: "0" }}>
-                    <strong
-                      style={{ display: "block", marginBottom: "0.375rem" }}
-                    >
-                      What affects feelings:
-                    </strong>
-                    Personal history, cultural background, current situation,
-                    physical state, relationships, expectations, and individual
-                    psychological factors all influence how emotions are
-                    experienced as feelings.
-                  </div>
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "20px",
-                      border: "6px solid transparent",
-                      borderTopColor: "#0f172a",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="section-actions">
-              <button className="reset-button" onClick={resetProgress}>
-                Reset
               </button>
-            </div>
-          </div>
-          <div className="emotions-list">
-            {discoveredEmotionsList.length > 0 ? (
-              discoveredEmotionsList
-                .filter((emotion) => {
-                  // Hide emotions that can't be combined when items are in crafting slots
-                  if (craftingSlots.length > 0) {
-                    const isInSlots = craftingSlots.includes(emotion);
-                    const isCombinable = combinableEmotions.has(emotion);
-                    return isInSlots || isCombinable;
-                  }
-                  return true;
-                })
+            </h3>
+            <div className="emotions-list">
+            {feelingsList.length > 0 ? (
+              feelingsList
                 .map((emotion) => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
                   const isHovered = hoveredEmotion === emotion;
                   const hasOptions = hasCombinableOptions(emotion);
+                  // Check if item should be faded out (selected items or not available when crafting)
+                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
+                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
 
                   return (
-                    <div key={emotion} className="emotion-wrapper">
+                    <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
                       <button
                         className={`discovered-emotion ${
                           isHighlighted ? "highlighted" : ""
                         } ${isCombinable ? "combinable" : ""} ${
                           isUnexplored ? "unexplored" : ""
-                        } ${hasOptions ? "has-options" : ""}`}
+                        } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                        disabled={isDisabled}
                         onClick={(e) => handleEmotionClick(emotion, e)}
                         onContextMenu={(e) => {
                           e.preventDefault();
@@ -4201,6 +4207,11 @@ export const App = () => {
                         }}
                         onMouseEnter={() => handleEmotionHover(emotion)}
                         onMouseLeave={handleEmotionLeave}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedEmotionPopup(emotion);
+                        }}
                         style={
                           {
                             "--emotion-color": getEmotionColor(emotion),
@@ -4245,48 +4256,50 @@ export const App = () => {
                           const isNew =
                             result && !discoveredEmotions.has(result);
 
-                          if (result && isNew) {
-                            // Can combine to create new emotion - show green plus
+                          if (result && isNew && showCombinableIndicators) {
+                            // Can combine to create new emotion - show surprise symbol
                             return (
                               <span
                                 className="emotion-badge combinable-badge"
                                 title={`Can discover: ${result}`}
                               >
-                                +
+                                !
                               </span>
                             );
                           }
                           // Don't show badge if already tried/discovered
                         } else if (!isHighlighted) {
                           // When no emotion is highlighted, show badges based on combination options
-                          if (hasOptions) {
+                          if (isUnexplored && showCombinableIndicators) {
+                            // Show surprise symbol for unexplored feelings
+                            return (
+                              <span
+                                className="emotion-badge combinable-badge"
+                                title="Undiscovered feeling - can combine to discover"
+                              >
+                                !
+                              </span>
+                            );
+                          } else if (hasOptions && showCombinableIndicators) {
                             const undiscovered =
                               getUndiscoveredEmotions(emotion);
                             if (undiscovered.length > 0) {
-                              // Show green badge if can combine with other emotions to discover new ones
+                              // Show surprise symbol badge if can combine with other emotions to discover new ones
                               return (
                                 <span
                                   className="emotion-badge combinable-badge"
                                   title="Can combine with other emotions"
                                 >
-                                  +
-                                </span>
-                              );
-                            }
-                            // Don't show badge if all combinations are finished
+                                !
+                              </span>
+                            );
                           }
-                          // If hasOptions is false, don't show any badge (nothing to combine with)
+                          // Don't show badge if all combinations are finished
                         }
-                        return null;
-                      })()}
-                      {isHovered && (
-                        <div className="emotion-tooltip">
-                          <div className="tooltip-title">{emotion}</div>
-                          <div className="tooltip-description">
-                            {getFeelingDescription(emotion)}
-                          </div>
-                        </div>
-                      )}
+                        // If hasOptions is false, don't show any badge (nothing to combine with)
+                      }
+                      return null;
+                    })()}
                     </div>
                   );
                 })
@@ -4295,9 +4308,276 @@ export const App = () => {
                 Combine feelings to discover new ones!
               </p>
             )}
+            </div>
+          </div>
+          <div style={{ marginTop: "2rem" }}>
+            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              State ({statesList.length})
+              <button
+                onClick={() => setShowStatesModal(true)}
+                style={{
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  color: "#94a3b8",
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  border: "1px solid #94a3b8",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                  background: "transparent",
+                  padding: 0,
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.color = "#667eea";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#94a3b8";
+                  e.currentTarget.style.color = "#94a3b8";
+                }}
+              >
+                ?
+              </button>
+            </h3>
+            <div className="emotions-list">
+            {statesList.length > 0 ? (
+              statesList
+                .map((emotion) => {
+                  const isHighlighted = craftingSlots.includes(emotion);
+                  const isCombinable = combinableEmotions.has(emotion);
+                  const isUnexplored = unexploredEmotions.has(emotion);
+                  const isHovered = hoveredEmotion === emotion;
+                  const hasOptions = hasCombinableOptions(emotion);
+                  // Check if item should be faded out (selected items or not available when crafting)
+                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
+                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
+
+                  return (
+                    <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
+                      <button
+                        className={`discovered-emotion ${
+                          isHighlighted ? "highlighted" : ""
+                        } ${isCombinable ? "combinable" : ""} ${
+                          isUnexplored ? "unexplored" : ""
+                        } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                        disabled={isDisabled}
+                        onClick={(e) => handleEmotionClick(emotion, e)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          viewFeelingDetails(emotion);
+                        }}
+                        onMouseEnter={() => handleEmotionHover(emotion)}
+                        onMouseLeave={handleEmotionLeave}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedEmotionPopup(emotion);
+                        }}
+                        style={
+                          {
+                            "--emotion-color": getEmotionColor(emotion),
+                            "--emotion-border-color":
+                              getEmotionBorderColor(emotion),
+                          } as React.CSSProperties
+                        }
+                      >
+                        {BASE_EMOTIONS.includes(emotion) ? (
+                          <EmotionShape
+                            emotion={emotion}
+                            color={
+                              isHighlighted
+                                ? "white"
+                                : getEmotionBorderColor(emotion)
+                            }
+                            size={14}
+                          />
+                        ) : (
+                          <BlendedEmotionShape
+                            emotion={emotion}
+                            color={
+                              isHighlighted
+                                ? "white"
+                                : getEmotionBorderColor(emotion)
+                            }
+                            size={14}
+                          />
+                        )}
+                        {emotion}
+                      </button>
+                      {(() => {
+                        if (
+                          highlightedEmotion &&
+                          highlightedEmotion !== emotion
+                        ) {
+                          // When another emotion is highlighted, show badge based on combination status with highlighted emotion
+                          const result = getEmotionCombination(
+                            highlightedEmotion,
+                            emotion
+                          );
+                          const isNew =
+                            result && !discoveredEmotions.has(result);
+
+                          if (result && isNew && showCombinableIndicators) {
+                            // Can combine to create new emotion - show surprise symbol
+                            return (
+                              <span
+                                className="emotion-badge combinable-badge"
+                                title={`Can discover: ${result}`}
+                              >
+                                !
+                              </span>
+                            );
+                          }
+                          // Don't show badge if already tried/discovered
+                        } else if (!isHighlighted) {
+                          // When no emotion is highlighted, show badges based on combination options
+                          if (isUnexplored && showCombinableIndicators) {
+                            // Show surprise symbol for unexplored feelings
+                            return (
+                              <span
+                                className="emotion-badge combinable-badge"
+                                title="Undiscovered feeling - can combine to discover"
+                              >
+                                !
+                              </span>
+                            );
+                          } else if (hasOptions && showCombinableIndicators) {
+                            const undiscovered =
+                              getUndiscoveredEmotions(emotion);
+                            if (undiscovered.length > 0) {
+                              // Show surprise symbol badge if can combine with other emotions to discover new ones
+                              return (
+                                <span
+                                  className="emotion-badge combinable-badge"
+                                  title="Can combine with other emotions"
+                                >
+                                  !
+                                </span>
+                              );
+                            }
+                          }
+                          // Don't show badge if all combinations are finished
+                        }
+                        // If hasOptions is false, don't show any badge (nothing to combine with)
+                        return null;
+                      })()}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="empty-state">
+                Combine feelings to discover new states!
+              </p>
+            )}
+            </div>
           </div>
         </section>
       </main>
+
+      {/* Centered Emotion Popup Overlay */}
+      {selectedEmotionPopup && (
+        <div className="emotion-popup-overlay" onClick={closeEmotionPopup}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={closeEmotionPopup}>
+              ×
+            </button>
+            <div className="emotion-popup-title">{selectedEmotionPopup}</div>
+            <div className="emotion-popup-description">
+              {getFeelingDescription(selectedEmotionPopup)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Emotions Modal */}
+      {showEmotionsModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowEmotionsModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowEmotionsModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">Emotions</div>
+            <div className="emotion-popup-description">
+              Emotions are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. They are fundamental human experiences that arise from our interactions with the world around us. Base emotions like Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, and Anticipation form the foundation of our emotional landscape and can be combined to create more nuanced feelings and states.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feelings Modal */}
+      {showFeelingsModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowFeelingsModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowFeelingsModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">Feelings</div>
+            <div className="emotion-popup-description">
+              Feelings are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives. Feelings are often more complex than base emotions, as they can be combinations of multiple emotions or emotions filtered through our personal experiences, memories, and cultural background.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* States Modal */}
+      {showStatesModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowStatesModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowStatesModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">State</div>
+            <div className="emotion-popup-description">
+              States are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience. They can be the result of combining multiple emotions and feelings, creating a more persistent emotional landscape that shapes how we perceive and interact with the world.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Type Modal */}
+      {showTypeModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowTypeModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowTypeModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">Type</div>
+            <div className="emotion-popup-description">
+              <p style={{ marginBottom: "1rem" }}>
+                The Type field categorizes emotional experiences into three distinct categories:
+              </p>
+              <p style={{ marginBottom: "1rem" }}>
+                <strong>Emotions</strong> are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. Base emotions like Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, and Anticipation form the foundation of our emotional landscape.
+              </p>
+              <p style={{ marginBottom: "1rem" }}>
+                <strong>Feelings</strong> are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives, often as combinations of multiple emotions filtered through our personal experiences, memories, and cultural background.
+              </p>
+              <p>
+                <strong>States</strong> are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience that shapes how we perceive and interact with the world.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dimension Modal */}
+      {selectedDimensionModal && (
+        <div className="emotion-popup-overlay" onClick={() => setSelectedDimensionModal(null)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setSelectedDimensionModal(null)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">{getDimensionDisplayName(selectedDimensionModal)}</div>
+            <div className="emotion-popup-description">
+              {DIMENSION_TOOLTIPS[selectedDimensionModal]}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
