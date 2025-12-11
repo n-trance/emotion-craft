@@ -2504,7 +2504,6 @@ export const App = () => {
   const [unexploredEmotions, setUnexploredEmotions] = useState<Set<string>>(
     new Set()
   );
-  const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null);
   const [selectedEmotionPopup, setSelectedEmotionPopup] = useState<string | null>(null);
   const [triedCombinations, setTriedCombinations] = useState<Set<string>>(
     new Set()
@@ -2647,34 +2646,6 @@ export const App = () => {
     setTotalDiscoveries(array.length);
   };
 
-  const getCombinableEmotions = (
-    emotion: string
-  ): { combinable: Set<string>; unexplored: Set<string> } => {
-    const combinable = new Set<string>();
-    const unexplored = new Set<string>();
-    const allEmotions = Array.from(discoveredEmotions);
-
-    for (const otherEmotion of allEmotions) {
-      if (otherEmotion !== emotion) {
-        const result = getEmotionCombination(emotion, otherEmotion);
-        if (result) {
-          combinable.add(otherEmotion);
-          // Check if this combination has been tried
-          const comboKey1 = `${emotion}+${otherEmotion}`;
-          const comboKey2 = `${otherEmotion}+${emotion}`;
-          if (
-            !triedCombinations.has(comboKey1) &&
-            !triedCombinations.has(comboKey2)
-          ) {
-            unexplored.add(otherEmotion);
-          }
-        }
-      }
-    }
-
-    return { combinable, unexplored };
-  };
-
   // Get emotions that will result in a valid feeling when combined with items in crafting slots
   const getCombinableEmotionsWithAll = (
     slots: string[]
@@ -2772,8 +2743,7 @@ export const App = () => {
     }
   };
 
-  const handleEmotionHover = (emotion: string) => {
-    setHoveredEmotion(emotion);
+  const handleEmotionHover = (_emotion: string) => {
     // When hovering, show what combines with the hovered emotion
     // But if we have crafting slots, restore to showing what combines with all slots when leaving
   };
@@ -2783,7 +2753,6 @@ export const App = () => {
   };
 
   const handleEmotionLeave = () => {
-    setHoveredEmotion(null);
     // Restore combinable emotions based on crafting slots when hover ends
     if (craftingSlots.length > 0) {
       const { combinable, unexplored } = getCombinableEmotionsWithAll(craftingSlots);
@@ -4047,7 +4016,6 @@ export const App = () => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
-                  const isHovered = hoveredEmotion === emotion;
                   const hasOptions = hasCombinableOptions(emotion);
                   // Check if item should be faded out (selected items fade out, or not available when crafting)
                   const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
@@ -4185,7 +4153,6 @@ export const App = () => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
-                  const isHovered = hoveredEmotion === emotion;
                   const hasOptions = hasCombinableOptions(emotion);
                   // Check if item should be faded out (selected items or not available when crafting)
                   const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
@@ -4350,7 +4317,6 @@ export const App = () => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
-                  const isHovered = hoveredEmotion === emotion;
                   const hasOptions = hasCombinableOptions(emotion);
                   // Check if item should be faded out (selected items or not available when crafting)
                   const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
