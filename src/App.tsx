@@ -1500,7 +1500,7 @@ const Modals = lazy(() => import("./components/Modals"));
               Combine emotions to discover new feelings
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div className="header-actions">
             <button
               aria-label="Emotion finder"
               title="Find emotion by dimensions"
@@ -1508,18 +1508,7 @@ const Modals = lazy(() => import("./components/Modals"));
                 resetEmotionFinder();
                 setShowFinderModal(true);
               }}
-              style={{
-                border: "1px solid #e2e8f0",
-                background: "#fff",
-                borderRadius: "50%",
-                width: "38px",
-                height: "38px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-              }}
+              className="header-finder-button"
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8fafc";
               }}
@@ -1535,7 +1524,7 @@ const Modals = lazy(() => import("./components/Modals"));
                 <span className="stat-label">Discovered</span>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="header-mode-buttons">
               <button
                 onClick={() => setMode("view")}
                 style={{
