@@ -807,15 +807,19 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
   }
 
   // Build the graph by iterating through all combinations
+  // Skip property updates during building for better performance
   for (const [parent1, children] of Object.entries(combinations)) {
     for (const [parent2, child] of Object.entries(children)) {
       // Skip self-combinations that result in the same emotion
       if (parent1 === parent2 && parent1 === child) {
         continue
       }
-      graph.addCombination(parent1, parent2, child)
+      graph.addCombination(parent1, parent2, child, true) // Skip property updates
     }
   }
+
+  // Finalize graph by calculating all properties in a single efficient pass
+  graph.finalizeGraph()
 
   return graph
 }

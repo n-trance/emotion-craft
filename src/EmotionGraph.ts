@@ -60,8 +60,9 @@ export class EmotionGraph {
 
   /**
    * Add a combination rule: parent1 + parent2 -> child
+   * @param skipPropertyUpdate If true, skip updating node properties (for faster bulk loading)
    */
-  addCombination(parent1: string, parent2: string, child: string): void {
+  addCombination(parent1: string, parent2: string, child: string, skipPropertyUpdate: boolean = false): void {
     // Ensure parent nodes exist
     if (!this.nodes.has(parent1)) {
       this.addNode(parent1)
@@ -85,12 +86,15 @@ export class EmotionGraph {
     }
     this.edges.get(child)!.add(edgeKey)
 
-    // Invalidate caches for the child
-    this.baseComponentsCache.delete(child)
-    this.levelCache.delete(child)
-    
-    // Recalculate child's properties
-    this.updateNodeProperties(child)
+    // Only update properties if not skipping (for performance during bulk loading)
+    if (!skipPropertyUpdate) {
+      // Invalidate caches for the child
+      this.baseComponentsCache.delete(child)
+      this.levelCache.delete(child)
+      
+      // Recalculate child's properties
+      this.updateNodeProperties(child)
+    }
   }
 
   /**
@@ -356,6 +360,94 @@ export class EmotionGraph {
     return paths.reduce((shortest, path) => 
       path.length < shortest.length ? path : shortest
     )
+  }
+
+  /**
+   * Finalize graph by calculating all node properties in a single efficient pass.
+   * Call this after adding all combinations to avoid redundant calculations.
+   */
+  finalizeGraph(): void {
+    // Clear all caches to ensure fresh calculation
+    this.baseComponentsCache.clear()
+    this.levelCache.clear()
+
+    // Calculate levels using BFS from base emotions (single pass for all nodes)
+    const visited = new Set<string>()
+    const queue: Array<{ emotion: string; level: number }> = []
+
+    // Initialize queue with base emotions
+    this.baseEmotions.forEach(base => {
+      queue.push({ emotion: base, level: 0 })
+      visited.add(base)
+      this.levelCache.set(base, 0)
+    })
+
+    // BFS to calculate levels for all nodes
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      
+      // Update node level
+      const node = this.nodes.get(current.emotion)
+      if (node) {
+        node.level = current.level
+      }
+
+      // Check all combinations that can be created from current emotion
+      const children = this.getChildren(current.emotion)
+      for (const child of children) {
+        if (!visited.has(child)) {
+          visited.add(child)
+          const childLevel = current.level + 1
+          queue.push({ emotion: child, level: childLevel })
+          this.levelCache.set(child, childLevel)
+        }
+      }
+    }
+
+    // Calculate base components for all nodes
+    // Process nodes in level order (base emotions first, then level 1, etc.)
+    // This allows us to build base components from parents efficiently
+    const nodesByLevel = new Map<number, string[]>()
+    for (const [emotion, node] of this.nodes.entries()) {
+      const level = node.level >= 0 ? node.level : 10 // Fallback for unreachable nodes
+      if (!nodesByLevel.has(level)) {
+        nodesByLevel.set(level, [])
+      }
+      nodesByLevel.get(level)!.push(emotion)
+    }
+
+    // Sort levels and process from lowest to highest
+    const sortedLevels = Array.from(nodesByLevel.keys()).sort((a, b) => a - b)
+    for (const level of sortedLevels) {
+      const emotionsAtLevel = nodesByLevel.get(level)!
+      for (const emotion of emotionsAtLevel) {
+        // Base emotions are their own components
+        if (this.baseEmotions.has(emotion)) {
+          const node = this.nodes.get(emotion)!
+          node.baseComponents = [emotion]
+          this.baseComponentsCache.set(emotion, [emotion])
+        } else {
+          // For non-base emotions, combine base components from all parents
+          const baseComponentsSet = new Set<string>()
+          const parents = this.getParents(emotion)
+          
+          for (const [p1, p2] of parents) {
+            // Get base components of parent1 (should already be calculated since we process by level)
+            const p1Components = this.baseComponentsCache.get(p1) || this.getBaseComponentsInternal(p1)
+            p1Components.forEach(comp => baseComponentsSet.add(comp))
+            
+            // Get base components of parent2
+            const p2Components = this.baseComponentsCache.get(p2) || this.getBaseComponentsInternal(p2)
+            p2Components.forEach(comp => baseComponentsSet.add(comp))
+          }
+          
+          const baseComponents = Array.from(baseComponentsSet).sort()
+          const node = this.nodes.get(emotion)!
+          node.baseComponents = baseComponents
+          this.baseComponentsCache.set(emotion, baseComponents)
+        }
+      }
+    }
   }
 }
 

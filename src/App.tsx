@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
 import type { DimensionType } from "./data/types";
 
@@ -597,6 +597,8 @@ export const App = () => {
   const [dimensionTooltips, setDimensionTooltips] = useState<{ [key in DimensionType]: string } | null>(null);
   const [dimensionValues, setDimensionValues] = useState<{ [key in DimensionType]: string[] } | null>(null);
   
+// Lazy-loaded modals chunk
+const Modals = lazy(() => import("./components/Modals"));
   // Lazy load emotion graph - built after first render to show loading screen first
   const [emotionGraph, setEmotionGraph] = useState<any>(null);
   
@@ -2642,72 +2644,28 @@ export const App = () => {
         </div>
       )}
 
-      {/* Type Modal */}
-      {showTypeModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowTypeModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowTypeModal(false)}>
-              ×
-            </button>
-            <div className="emotion-popup-title">Type</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                The Type field categorizes emotional experiences into three distinct categories:
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Emotions</strong> are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. Base emotions like Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, and Anticipation form the foundation of our emotional landscape.
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Feelings</strong> are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives, often as combinations of multiple emotions filtered through our personal experiences, memories, and cultural background.
-              </p>
-              <p>
-                <strong>States</strong> are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience that shapes how we perceive and interact with the world.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Type Filter Modal */}
-      {showTypeFilterModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowTypeFilterModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowTypeFilterModal(false)}>
-              ×
-            </button>
-            <div className="emotion-popup-title">Type</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                The Type field categorizes emotional experiences into three distinct categories:
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Emotions</strong> are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. Base emotions like Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, and Anticipation form the foundation of our emotional landscape.
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Feelings</strong> are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives, often as combinations of multiple emotions filtered through our personal experiences, memories, and cultural background.
-              </p>
-              <p>
-                <strong>States</strong> are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience that shapes how we perceive and interact with the world.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dimension Modal */}
-      {selectedDimensionModal && (
-        <div className="emotion-popup-overlay" onClick={() => setSelectedDimensionModal(null)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setSelectedDimensionModal(null)}>
-              ×
-            </button>
-            <div className="emotion-popup-title">{getDimensionDisplayName(selectedDimensionModal)}</div>
-            <div className="emotion-popup-description">
-              {dimensionTooltips && selectedDimensionModal ? formatDimensionTooltip(dimensionTooltips[selectedDimensionModal]) : null}
-            </div>
-          </div>
-        </div>
-      )}
+      <Suspense fallback={null}>
+        <Modals
+          showTypeModal={showTypeModal}
+          setShowTypeModal={setShowTypeModal}
+          showTypeFilterModal={showTypeFilterModal}
+          setShowTypeFilterModal={setShowTypeFilterModal}
+          showEmotionsModal={showEmotionsModal}
+          setShowEmotionsModal={setShowEmotionsModal}
+          showFeelingsModal={showFeelingsModal}
+          setShowFeelingsModal={setShowFeelingsModal}
+          showStatesModal={showStatesModal}
+          setShowStatesModal={setShowStatesModal}
+          selectedEmotionPopup={selectedEmotionPopup}
+          setSelectedEmotionPopup={setSelectedEmotionPopup}
+          selectedDimensionModal={selectedDimensionModal}
+          setSelectedDimensionModal={setSelectedDimensionModal}
+          dimensionTooltips={dimensionTooltips}
+          getDimensionDisplayName={getDimensionDisplayName}
+          formatDimensionTooltip={formatDimensionTooltip}
+          getFeelingDescription={getFeelingDescription}
+        />
+      </Suspense>
 
     </div>
   );
