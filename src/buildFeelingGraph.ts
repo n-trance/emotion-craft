@@ -27,7 +27,7 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Sadness': {
       'Disgust': 'Remorse', 'Surprise': 'Disappointment', 'Joy': 'Bittersweet', 'Anger': 'Envy',
-      'Fear': 'Despair', 'Anticipation': 'Pessimism'
+      'Fear': 'Despair', 'Anticipation': 'Pessimism', 'Acceptance': 'Resignation', 'Peace': 'Boredom'
     },
     'Disgust': {
       'Anger': 'Contempt', 'Sadness': 'Remorse', 'Surprise': 'Revulsion', 'Fear': 'Horror',
@@ -61,7 +61,7 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Awe': {
       'Joy': 'Transcendence', 'Fear': 'Terror', 'Trust': 'Reverence', 'Anger': 'Indignation',
-      'Sadness': 'Melancholy', 'Surprise': 'Amazement', 'Anticipation': 'Wonder'
+      'Sadness': 'Melancholy', 'Surprise': 'Amazement', 'Anticipation': 'Wonder',
     },
     'Anxiety': {
       'Joy': 'Relief', 'Anger': 'Frustration', 'Sadness': 'Desperation', 'Fear': 'Panic',

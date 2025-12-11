@@ -31,7 +31,6 @@ const BASE_EMOTION_SHAPES: {
     | "star"
     | "hexagon"
     | "triangleUp"
-    | "diamond"
     | "oval";
 } = {
   Joy: "circle",

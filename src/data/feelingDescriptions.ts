@@ -118,6 +118,10 @@ export const FEELING_DESCRIPTIONS: { [key: string]: string } = {
     "Hatred of oneself, typically as a result of guilt or shame.",
   Shame:
     "A painful feeling of humiliation or distress caused by the consciousness of wrong or foolish behavior.",
+  Boredom:
+    "A state of low arousal and dissatisfaction arising from lack of stimulation or interest.",
+  Inspiration:
+    "A surge of positive motivation sparked by awe or admiration, prompting creativity or action.",
   Embarrassment:
     "A self-conscious feeling of awkwardness or discomfort after a social misstep or unwanted attention.",
   Shyness:
