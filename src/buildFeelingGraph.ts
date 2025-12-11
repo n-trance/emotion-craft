@@ -81,7 +81,8 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Guilt': {
       'Joy': 'Relief', 'Anger': 'Shame', 'Sadness': 'Remorse', 'Fear': 'Dread',
-      'Trust': 'Confession', 'Surprise': 'Regret', 'Anticipation': 'Worry'
+      'Trust': 'Confession', 'Surprise': 'Regret', 'Anticipation': 'Worry',
+      'Anxiety': 'Embarrassment'
     },
     'Pride': {
       'Joy': 'Triumph', 'Anger': 'Arrogance', 'Sadness': 'Nostalgia', 'Fear': 'Humility',
@@ -133,7 +134,8 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
       'Hope': 'Renewal', 'Love': 'Sacredness', 'Contentment': 'Tranquility',
       // Anchors to ensure Anticipation/Trust are reachable without overriding base pairs
       'Surprise': 'Anticipation',
-      'Fear': 'Trust'
+      'Fear': 'Trust',
+      'Anxiety': 'Shyness'
     },
     'Fury': {
       'Anger': 'Wrath', 'Hate': 'Vengeance', 'Despair': 'Nihilism'
@@ -357,6 +359,14 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Self-Pity': {
       'Sadness': 'Despair', 'Envy': 'Insecurity', 'Anger': 'Resentment', 'Fear': 'Hopelessness'
+    },
+    'Embarrassment': {
+      'Guilt': 'Shame',
+      'Fear': 'Anxiety'
+    },
+    'Shyness': {
+      'Fear': 'Anxiety',
+      'Sadness': 'Self-Pity'
     },
     'Insecurity': {
       'Fear': 'Anxiety', 'Envy': 'Jealousy', 'Sadness': 'Self-Pity', 'Anger': 'Defensiveness'

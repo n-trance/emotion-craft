@@ -118,6 +118,10 @@ export const FEELING_DESCRIPTIONS: { [key: string]: string } = {
     "Hatred of oneself, typically as a result of guilt or shame.",
   Shame:
     "A painful feeling of humiliation or distress caused by the consciousness of wrong or foolish behavior.",
+  Embarrassment:
+    "A self-conscious feeling of awkwardness or discomfort after a social misstep or unwanted attention.",
+  Shyness:
+    "A feeling of social inhibition or reticence marked by nervousness and self-consciousness around others.",
   Dread: "Great fear or apprehension.",
   Confession:
     "A feeling of relief and release from guilt or burden after admitting wrongdoing; the emotional state of being honest about faults.",
