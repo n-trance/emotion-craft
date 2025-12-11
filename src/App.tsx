@@ -636,6 +636,14 @@ const Modals = lazy(() => import("./components/Modals"));
     loadData();
   }, []);
 
+  // Cache for base emotion ratios to avoid repeated deep traversals
+  const baseRatioCache = useRef<Map<string, Array<{ emotion: string; ratio: number }>>>(new Map());
+
+  // Clear caches when graph changes
+  useEffect(() => {
+    baseRatioCache.current.clear();
+  }, [emotionGraph]);
+
   // Helper functions that use the emotion graph
   const getEmotionCombination = (
     emotion1: string,
@@ -653,16 +661,21 @@ const Modals = lazy(() => import("./components/Modals"));
   const getBaseEmotionRatios = (
     emotion: string
   ): Array<{ emotion: string; ratio: number }> => {
+    const cached = baseRatioCache.current.get(emotion);
+    if (cached) return cached;
+
     if (!emotionGraph) return [];
     
     if (BASE_EMOTIONS.includes(emotion)) {
-      return [{ emotion, ratio: 1 }];
+      const ratios = [{ emotion, ratio: 1 }];
+      baseRatioCache.current.set(emotion, ratios);
+      return ratios;
     }
 
     // Count weighted contributions of each base emotion
     // Weight decreases with depth to prioritize direct contributions
     const counts = new Map<string, number>();
-    const maxDepth = 10; // Prevent infinite recursion
+    const maxDepth = 5; // Limit depth for performance
 
     const countContributions = (
       current: string,
@@ -681,13 +694,13 @@ const Modals = lazy(() => import("./components/Modals"));
       const parents = emotionGraph.getParents(current);
       if (parents.length === 0) return;
 
-      // For each parent pair, split weight equally and recurse
-      // Use first parent pair (most direct path)
-      const [p1, p2] = parents[0];
-      const childWeight = weight * 0.5; // Split weight between two parents
-
-      countContributions(p1, depth + 1, childWeight);
-      countContributions(p2, depth + 1, childWeight);
+      // Split weight across all parent pairs, then across each parent in the pair
+      const pairWeight = weight / parents.length;
+      parents.forEach(([p1, p2]: [string, string]) => {
+        const childWeight = pairWeight * 0.5;
+        countContributions(p1, depth + 1, childWeight);
+        countContributions(p2, depth + 1, childWeight);
+      });
     };
 
     countContributions(emotion, 0, 1.0);
@@ -706,12 +719,15 @@ const Modals = lazy(() => import("./components/Modals"));
       }));
     }
 
-    return Array.from(counts.entries())
+    const ratios = Array.from(counts.entries())
       .map(([emotion, count]) => ({
         emotion,
         ratio: count / total,
       }))
       .sort((a, b) => b.ratio - a.ratio);
+
+    baseRatioCache.current.set(emotion, ratios);
+    return ratios;
   };
 
   // Categorize an item as emotion, feeling, or state based on its description

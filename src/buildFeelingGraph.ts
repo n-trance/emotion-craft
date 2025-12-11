@@ -13,7 +13,6 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
   const graph = new EmotionGraph(baseFeelings)
   
   const combinations: EmotionCombination = {
-    // Base combinations
     'Joy': {
       'Anticipation': 'Optimism', 'Surprise': 'Delight', 'Fear': 'Nervous Excitement',
       'Anger': 'Pride', 'Sadness': 'Bittersweet', 'Disgust': 'Morbid Curiosity', 'Trust': 'Love'
@@ -32,7 +31,7 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Disgust': {
       'Anger': 'Contempt', 'Sadness': 'Remorse', 'Surprise': 'Revulsion', 'Fear': 'Horror',
-      'Joy': 'Morbid Curiosity', 'Anticipation': 'Apprehension'
+      'Joy': 'Morbid Curiosity', 'Anticipation': 'Apprehension', 'Trust': 'Acceptance'
     },
     'Anger': {
       'Anticipation': 'Aggressiveness', 'Disgust': 'Contempt', 'Joy': 'Pride',
@@ -42,6 +41,14 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
       'Joy': 'Optimism', 'Anger': 'Aggressiveness', 'Fear': 'Anxiety',
       'Surprise': 'Trust', 'Sadness': 'Pessimism', 'Disgust': 'Apprehension'
     },
+    'Trust': {
+      'Anticipation': 'Hope',
+      'Sadness': 'Peace',
+      'Surprise': 'Faith',
+      'Joy': 'Love',
+      'Peace': 'Harmony',
+      'Fear': 'Courage'
+    },
     'Love': {
       'Fear': 'Vulnerability', 'Anger': 'Passion', 'Sadness': 'Heartbreak', 'Joy': 'Euphoria',
       'Surprise': 'Infatuation', 'Anticipation': 'Longing', 'Disgust': 'Disillusionment',
@@ -50,7 +57,7 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     'Optimism': {
       'Fear': 'Hope', 'Anger': 'Determination', 'Sadness': 'Resilience', 'Joy': 'Elation',
       'Trust': 'Confidence', 'Surprise': 'Wonder', 'Disgust': 'Tolerance',
-      'Hope': 'Euphoria', 'Peace': 'Serenity', 'Confidence': 'Anticipation'
+      'Hope': 'Euphoria', 'Peace': 'Serenity'
     },
     'Awe': {
       'Joy': 'Transcendence', 'Fear': 'Terror', 'Trust': 'Reverence', 'Anger': 'Indignation',
@@ -123,7 +130,10 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     },
     'Peace': {
       'Joy': 'Serenity', 'Trust': 'Harmony', 'Acceptance': 'Equanimity',
-      'Hope': 'Renewal', 'Love': 'Sacredness', 'Contentment': 'Tranquility'
+      'Hope': 'Renewal', 'Love': 'Sacredness', 'Contentment': 'Tranquility',
+      // Anchors to ensure Anticipation/Trust are reachable without overriding base pairs
+      'Surprise': 'Anticipation',
+      'Fear': 'Trust'
     },
     'Fury': {
       'Anger': 'Wrath', 'Hate': 'Vengeance', 'Despair': 'Nihilism'
@@ -676,7 +686,7 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
       'Trust': 'Acceptance'
     },
     'Comfort': {
-      'Reassurance': 'Calm', 'Peace': 'Serenity', 'Trust': 'Confidence', 'Hope': 'Relief'
+      'Peace': 'Serenity', 'Trust': 'Confidence', 'Hope': 'Relief'
     },
     'Complacency': {
       'Satisfaction': 'Contentment', 'Smugness': 'Arrogance', 'Peace': 'Stillness', 'Pride': 'Acceptance'
@@ -790,10 +800,6 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     'Transcendence': {
       'Awe': 'Reverence', 'Peace': 'Sacredness', 'Bliss': 'Adoration', 'Oneness': 'Wholeness'
     },
-    'Trust': {
-      'Surprise': 'Faith', 'Anticipation': 'Hope', 'Joy': 'Love', 'Peace': 'Harmony',
-      'Fear': 'Courage'
-    },
     'Understanding': {
       'Tolerance': 'Acceptance', 'Trust': 'Empathy', 'Peace': 'Harmony', 'Curiosity': 'Faith'
     },
@@ -806,6 +812,9 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     }
   }
 
+  // Track potential data issues
+  const duplicateWarnings: Array<{ edgeKey: string; existing: string; incoming: string }> = []
+
   // Build the graph by iterating through all combinations
   // Skip property updates during building for better performance
   for (const [parent1, children] of Object.entries(combinations)) {
@@ -814,12 +823,36 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
       if (parent1 === parent2 && parent1 === child) {
         continue
       }
+
+      // Detect duplicate parent-pair definitions before overriding
+      const edgeKey = [parent1, parent2].sort().join('+')
+      const existing = graph.getCombination(parent1, parent2)
+      if (existing && existing !== child) {
+        duplicateWarnings.push({ edgeKey, existing, incoming: child })
+      }
+
       graph.addCombination(parent1, parent2, child, true) // Skip property updates
     }
   }
 
   // Finalize graph by calculating all properties in a single efficient pass
   graph.finalizeGraph()
+
+  // Warn about unreachable nodes (level >= 10 signals no path from the six bases)
+  const unreachable: string[] = []
+  graph.getAllEmotions().forEach(emotion => {
+    if (graph.getLevel(emotion) >= 10) {
+      unreachable.push(emotion)
+    }
+  })
+  if (unreachable.length > 0) {
+    console.warn('[EmotionGraph] Unreachable emotions (no base path):', unreachable)
+  }
+
+  // Warn about parent-pair collisions
+  if (duplicateWarnings.length > 0) {
+    console.warn('[EmotionGraph] Duplicate parent-pair definitions (last wins):', duplicateWarnings)
+  }
 
   return graph
 }
