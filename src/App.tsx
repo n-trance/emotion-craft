@@ -775,6 +775,21 @@ const Modals = lazy(() => import("./components/Modals"));
     setFinderResults([]);
   };
 
+  const handleFinderEmotionSelect = (emotion: string) => {
+    const isNew = !discoveredEmotions.has(emotion);
+    setLastResult(emotion);
+    setLastCombination([]);
+    setIsNewDiscovery(isNew);
+    setHasAttemptedCombine(true);
+    if (isNew) {
+      const updated = new Set(discoveredEmotions);
+      updated.add(emotion);
+      setDiscoveredEmotions(updated);
+      saveDiscoveries(updated);
+    }
+    setShowFinderModal(false);
+  };
+
   const EmotionChip = ({
     emotion,
     onClick,
@@ -2843,7 +2858,7 @@ const Modals = lazy(() => import("./components/Modals"));
                       <EmotionChip
                         key={emotion}
                         emotion={emotion}
-                        onClick={() => handleEmotionClick(emotion)}
+                        onClick={() => handleFinderEmotionSelect(emotion)}
                       />
                     ))}
                   </div>
