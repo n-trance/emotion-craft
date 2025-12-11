@@ -14,11 +14,11 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
   
   const combinations: EmotionCombination = {
     'Joy': {
-      'Anticipation': 'Optimism', 'Surprise': 'Delight', 'Fear': 'Nervous Excitement',
+      'Anticipation': 'Optimism', 'Surprise': 'Delight', 'Fear': 'Anticipation',
       'Anger': 'Pride', 'Sadness': 'Bittersweet', 'Disgust': 'Morbid Curiosity', 'Trust': 'Love'
     },
     'Fear': {
-      'Surprise': 'Awe', 'Joy': 'Nervous Excitement', 'Anticipation': 'Anxiety',
+      'Surprise': 'Awe', 'Joy': 'Anticipation', 'Anticipation': 'Anxiety',
       'Anger': 'Hate', 'Sadness': 'Despair', 'Disgust': 'Horror'
     },
     'Surprise': {
