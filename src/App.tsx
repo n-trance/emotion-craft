@@ -565,7 +565,6 @@ export const App = () => {
     new Set()
   );
   const [hasAttemptedCombine, setHasAttemptedCombine] = useState(false);
-  const [showLegendPopover, setShowLegendPopover] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCombining, setIsCombining] = useState(false);
   const [selectedDimensionValues, setSelectedDimensionValues] = useState<{
@@ -575,7 +574,7 @@ export const App = () => {
     useState<DimensionType | null>(null);
   const [dimensionsExpanded, setDimensionsExpanded] = useState(false);
   const [typeFilter, setTypeFilter] = useState<FilterType>("all");
-  const [hoveredTypeFilter, setHoveredTypeFilter] = useState(false);
+  const [showTypeFilterModal, setShowTypeFilterModal] = useState(false);
   const [showEmotionsModal, setShowEmotionsModal] = useState(false);
   const [showFeelingsModal, setShowFeelingsModal] = useState(false);
   const [showStatesModal, setShowStatesModal] = useState(false);
@@ -997,9 +996,8 @@ export const App = () => {
     setTimeout(() => {
       if (resultDisplayRef.current) {
         const elementTop = resultDisplayRef.current.offsetTop;
-        const offset = 80; // Extra space at the top
         window.scrollTo({
-          top: elementTop - offset,
+          top: elementTop,
           behavior: 'smooth'
         });
       }
@@ -1105,13 +1103,12 @@ export const App = () => {
       setHasAttemptedCombine(false);
       autoCombineTriggered.current = false;
 
-      // Scroll to result display after combining with extra top spacing
+      // Scroll to result display after combining
       setTimeout(() => {
         if (resultDisplayRef.current) {
           const elementTop = resultDisplayRef.current.offsetTop;
-          const offset = 80; // Extra space at the top
           window.scrollTo({
-            top: elementTop - offset,
+            top: elementTop,
             behavior: 'smooth'
           });
         }
@@ -1770,7 +1767,8 @@ export const App = () => {
                           <span
                             key={dimension}
                             className="result-dimension-tag"
-                            title={dimensionTooltips ? `${dimension}: ${dimensionTooltips[dimension]}` : ''}
+                            onClick={() => setSelectedDimensionModal(dimension)}
+                            style={{ cursor: "pointer" }}
                           >
                             <span className="dimension-name">
                               {getDimensionDisplayName(dimension)}:
@@ -1858,11 +1856,10 @@ export const App = () => {
                   >
                     Type
                   </label>
-                  <span
-                    onMouseEnter={() => setHoveredTypeFilter(true)}
-                    onMouseLeave={() => setHoveredTypeFilter(false)}
+                  <button
+                    onClick={() => setShowTypeFilterModal(true)}
                     style={{
-                      cursor: "help",
+                      cursor: "pointer",
                       fontSize: "0.7rem",
                       color: "#94a3b8",
                       width: "14px",
@@ -1873,78 +1870,21 @@ export const App = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       lineHeight: 1,
+                      background: "transparent",
+                      padding: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#667eea";
+                      e.currentTarget.style.color = "#667eea";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#94a3b8";
+                      e.currentTarget.style.color = "#94a3b8";
                     }}
                   >
                     ?
-                  </span>
-                  {hoveredTypeFilter && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "100%",
-                        left: 0,
-                        marginBottom: "8px",
-                        background: "#0f172a",
-                        color: "white",
-                        padding: "0.875rem 1rem",
-                        borderRadius: "6px",
-                        fontSize: "0.8125rem",
-                        lineHeight: 1.6,
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                        zIndex: 1000,
-                        pointerEvents: "none",
-                        maxWidth: "500px",
-                        whiteSpace: "normal",
-                        wordWrap: "break-word",
-                      }}
-                    >
-                      <div
-                        style={{
-                          marginBottom: "0.75rem",
-                          fontWeight: "600",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        Type
-                      </div>
-                      <div style={{ marginBottom: "0.5rem" }}>
-                        <strong
-                          style={{ display: "block", marginBottom: "0.25rem" }}
-                        >
-                          Emotion:
-                        </strong>{" "}
-                        Basic, universal emotional responses (Joy, Fear,
-                        Sadness, Disgust, Anger, Surprise)
-                      </div>
-                      <div style={{ marginBottom: "0.5rem" }}>
-                        <strong
-                          style={{ display: "block", marginBottom: "0.25rem" }}
-                        >
-                          Feeling:
-                        </strong>{" "}
-                        Subjective experiences that combine emotions with
-                        personal context and meaning
-                      </div>
-                      <div>
-                        <strong
-                          style={{ display: "block", marginBottom: "0.25rem" }}
-                        >
-                          State:
-                        </strong>{" "}
-                        Enduring conditions or modes of being that persist over
-                        time
-                      </div>
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "100%",
-                          left: "20px",
-                          border: "6px solid transparent",
-                          borderTopColor: "#0f172a",
-                        }}
-                      />
-                    </div>
-                  )}
+                  </button>
                 </div>
                 <div
                   style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}
@@ -2145,51 +2085,8 @@ export const App = () => {
                     onChange={(e) => setShowCombinableIndicators(e.target.checked)}
                     style={{ cursor: "pointer" }}
                   />
-                  Show indicators
+                  Show hint
                 </label>
-              </div>
-              <div className="legend-button-wrapper">
-                <button
-                  className="legend-button"
-                  onMouseEnter={() => setShowLegendPopover(true)}
-                  onMouseLeave={(e) => {
-                    // Only close on mouse leave if not clicking
-                    if (
-                      !e.relatedTarget ||
-                      !(e.relatedTarget as Element).closest(".legend-popover")
-                    ) {
-                      setShowLegendPopover(false);
-                    }
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowLegendPopover(!showLegendPopover);
-                  }}
-                  title="Show legend"
-                >
-                  ?
-                </button>
-                {showLegendPopover && (
-                  <div
-                    className="legend-popover"
-                    onMouseEnter={() => setShowLegendPopover(true)}
-                    onMouseLeave={() => setShowLegendPopover(false)}
-                  >
-                    <h3>Indicators</h3>
-                    <div className="legend-items">
-                      <div className="legend-item">
-                        <span className="legend-indicator combinable-indicator">
-                          !
-                        </span>
-                        <span className="legend-text">
-                          ! = Can combine to create new emotion (when
-                          selected) or can combine with other emotions (when not
-                          selected)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -2771,6 +2668,32 @@ export const App = () => {
         </div>
       )}
 
+      {/* Type Filter Modal */}
+      {showTypeFilterModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowTypeFilterModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowTypeFilterModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">Type</div>
+            <div className="emotion-popup-description">
+              <p style={{ marginBottom: "1rem" }}>
+                The Type field categorizes emotional experiences into three distinct categories:
+              </p>
+              <p style={{ marginBottom: "1rem" }}>
+                <strong>Emotions</strong> are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. Base emotions like Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, and Anticipation form the foundation of our emotional landscape.
+              </p>
+              <p style={{ marginBottom: "1rem" }}>
+                <strong>Feelings</strong> are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives, often as combinations of multiple emotions filtered through our personal experiences, memories, and cultural background.
+              </p>
+              <p>
+                <strong>States</strong> are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience that shapes how we perceive and interact with the world.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dimension Modal */}
       {selectedDimensionModal && (
         <div className="emotion-popup-overlay" onClick={() => setSelectedDimensionModal(null)}>
@@ -2785,6 +2708,7 @@ export const App = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

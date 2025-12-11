@@ -1115,7 +1115,7 @@ button,
 .emotion-badge.combinable-badge {
   color: #ffffff;
   border: 2px solid #ffffff;
-  background: #999999;
+  background: #fbbf24;
   width: 18px;
   height: 18px;
   font-size: 0.625rem;
@@ -1369,7 +1369,7 @@ button,
   line-height: 1;
   pointer-events: none;
   font-weight: 700;
-  background: #999999;
+  background: #fbbf24;
   border: 2px solid #ffffff;
   width: 18px;
   height: 18px;
