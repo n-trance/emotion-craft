@@ -4,11 +4,107 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Understanding Emotions</title>
+    <title>Emotion Craft</title>
+    <style>
+      /* Initial loading screen - shows before React loads */
+      #initial-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      .initial-loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        text-align: center;
+      }
+      .initial-loading-star {
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .initial-loading-star svg {
+        filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.3));
+      }
+      .initial-loading-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+      }
+      .initial-loading-subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        margin: 0;
+      }
+      .initial-loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #FFD700;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      /* Hide loading screen once React mounts */
+      #root:not(:empty) ~ #initial-loading {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="initial-loading">
+      <div class="initial-loading-content">
+        <div class="initial-loading-star">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+            <path fill="#FFD700" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <h2 class="initial-loading-title">Emotion Craft</h2>
+        <p class="initial-loading-subtitle">Preparing your emotional journey...</p>
+        <div class="initial-loading-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Hide initial loading screen once React mounts
+      // This runs after the module script loads
+      window.addEventListener('load', function() {
+        // Small delay to ensure React has started mounting
+        setTimeout(function() {
+          const initialLoading = document.getElementById('initial-loading');
+          if (initialLoading) {
+            initialLoading.style.opacity = '0';
+            initialLoading.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(function() {
+              initialLoading.style.display = 'none';
+            }, 300);
+          }
+        }, 100);
+      });
+    </script>
   </body>
 </html>
 
