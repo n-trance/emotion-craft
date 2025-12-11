@@ -596,6 +596,9 @@ export const App = () => {
   } | null>(null);
   const [dimensionTooltips, setDimensionTooltips] = useState<{ [key in DimensionType]: string } | null>(null);
   const [dimensionValues, setDimensionValues] = useState<{ [key in DimensionType]: string[] } | null>(null);
+  const [showFinderModal, setShowFinderModal] = useState(false);
+  const [finderSelections, setFinderSelections] = useState<Partial<Record<DimensionType, string>>>({});
+  const [finderResults, setFinderResults] = useState<string[]>([]);
   
 // Lazy-loaded modals chunk
 const Modals = lazy(() => import("./components/Modals"));
@@ -728,6 +731,86 @@ const Modals = lazy(() => import("./components/Modals"));
 
     baseRatioCache.current.set(emotion, ratios);
     return ratios;
+  };
+
+  // Emotion Finder helpers
+  const finderDimensions: DimensionType[] = [
+    "valence",
+    "arousal",
+    "dominance",
+    "motivationalDirection",
+    "socialContext",
+    "certainty",
+    "intensity",
+  ];
+
+  const runEmotionFinder = () => {
+    if (!emotionDimensions) {
+      setFinderResults([]);
+      return;
+    }
+
+    const activeFilters = Object.entries(finderSelections).filter(
+      ([, value]) => value !== undefined && value !== ""
+    ) as Array<[DimensionType, string]>;
+
+    if (activeFilters.length === 0) {
+      setFinderResults([]);
+      return;
+    }
+
+    const results = Object.entries(emotionDimensions)
+      .filter(([, dims]) =>
+        activeFilters.every(([dim, val]) => dims[dim] === val)
+      )
+      .map(([emotion]) => emotion)
+      .sort((a, b) => a.localeCompare(b))
+      .slice(0, 24);
+
+    setFinderResults(results);
+  };
+
+  const resetEmotionFinder = () => {
+    setFinderSelections({});
+    setFinderResults([]);
+  };
+
+  const EmotionChip = ({
+    emotion,
+    onClick,
+  }: {
+    emotion: string;
+    onClick?: () => void;
+  }) => {
+    const isBase = BASE_EMOTIONS.includes(emotion);
+    const ratios = isBase ? [{ emotion, ratio: 1 }] : getBaseEmotionRatios(emotion);
+    const gradient = isBase ? undefined : generateGradientFromRatios(ratios);
+    const border = getEmotionBorderColor(emotion);
+
+    return (
+      <button
+        className="discovered-emotion"
+        onClick={onClick}
+        style={
+          {
+            "--emotion-color": gradient || border,
+            "--emotion-border-color": border,
+          } as React.CSSProperties
+        }
+      >
+        {isBase ? (
+          <EmotionShape emotion={emotion} color="#0f172a" size={14} />
+        ) : (
+          <BlendedEmotionShape
+            emotion={emotion}
+            color="#0f172a"
+            size={14}
+            getBaseEmotionRatios={getBaseEmotionRatios}
+          />
+        )}
+        {emotion}
+      </button>
+    );
   };
 
   // Categorize an item as emotion, feeling, or state based on its description
@@ -1404,6 +1487,34 @@ const Modals = lazy(() => import("./components/Modals"));
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <button
+              aria-label="Emotion finder"
+              title="Find emotion by dimensions"
+              onClick={() => {
+                resetEmotionFinder();
+                setShowFinderModal(true);
+              }}
+              style={{
+                border: "1px solid #e2e8f0",
+                background: "#fff",
+                borderRadius: "50%",
+                width: "38px",
+                height: "38px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f8fafc";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffffff";
+              }}
+            >
+              🔍
+            </button>
             <div className="stats">
               <div className="stat-item">
                 <span className="stat-value">{totalDiscoveries}</span>
@@ -2655,6 +2766,89 @@ const Modals = lazy(() => import("./components/Modals"));
               <p style={{ marginBottom: 0 }}>
                 They can be the result of combining multiple emotions and feelings, creating a more persistent emotional landscape that shapes how we perceive and interact with the world.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Emotion Finder Modal */}
+      {showFinderModal && (
+        <div className="emotion-popup-overlay" onClick={() => setShowFinderModal(false)}>
+          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+            <button className="emotion-popup-close" onClick={() => setShowFinderModal(false)}>
+              ×
+            </button>
+            <div className="emotion-popup-title">Emotion Finder</div>
+            <div className="emotion-popup-description" style={{ display: "grid", gap: "0.75rem" }}>
+              <p style={{ marginBottom: 0 }}>
+                Pick dimension values to see emotions that match those attributes. Leave any blank to ignore it.
+              </p>
+              <div style={{ display: "grid", gap: "0.75rem" }}>
+                {finderDimensions.map((dimension) => (
+                  <div key={dimension} style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                    <label style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                      {getDimensionDisplayName(dimension)}
+                    </label>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      {(dimensionValues?.[dimension] || []).map((val) => {
+                        const isActive = finderSelections[dimension] === val;
+                        return (
+                          <button
+                            key={val}
+                            className={`filter-button ${isActive ? "active" : ""}`}
+                            onClick={() =>
+                              setFinderSelections((prev) => ({
+                                ...prev,
+                                [dimension]: isActive ? undefined : val,
+                              }))
+                            }
+                          >
+                            {getDimensionValueLabel(dimension, val)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  marginTop: "0.25rem",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button className="combine-button" onClick={runEmotionFinder}>
+                  Find
+                </button>
+                <button className="reset-button" onClick={resetEmotionFinder}>
+                  Clear
+                </button>
+              </div>
+              <div style={{ marginTop: "0.5rem" }}>
+                {finderResults.length === 0 ? (
+                  <p style={{ marginBottom: 0, color: "#94a3b8" }}>
+                    No matches yet. Choose dimension values and click Find.
+                  </p>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
+                    {finderResults.map((emotion) => (
+                      <EmotionChip
+                        key={emotion}
+                        emotion={emotion}
+                        onClick={() => handleEmotionClick(emotion)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

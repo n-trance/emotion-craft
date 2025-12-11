@@ -349,31 +349,33 @@ button,
 }
 
 .filter-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  background: transparent;
-  color: #64748b;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #e2e8f0;
+  background: #e2e8f0;
+  color: #475569;
   font-size: 0.875rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .filter-button:hover {
-  background: #e2e8f0;
-  color: #475569;
+  background: #e5e7eb;
+  border-color: #d8dee6;
 }
 
 .filter-button.active {
   background: #667eea;
   color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .filter-button.active:hover {
   background: #5568d3;
+  border-color: #5568d3;
 }
 
 .main-content {

@@ -132,7 +132,6 @@ export const buildFeelingGraph = (baseFeelings: string[]): EmotionGraph => {
     'Peace': {
       'Joy': 'Serenity', 'Trust': 'Harmony', 'Acceptance': 'Equanimity',
       'Hope': 'Renewal', 'Love': 'Sacredness', 'Contentment': 'Tranquility',
-      // Anchors to ensure Anticipation/Trust are reachable without overriding base pairs
       'Surprise': 'Anticipation',
       'Fear': 'Trust',
       'Anxiety': 'Shyness'
