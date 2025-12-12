@@ -20,8 +20,25 @@ export default defineConfig({
     },
     // Optimize chunk size warning limit
     chunkSizeWarningLimit: 1000,
-    // Enable minification
-    minify: 'esbuild',
+    // Use Terser for more aggressive minification and uglification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.log statements
+        drop_debugger: true, // Remove debugger statements
+        pure_funcs: ['console.log', 'console.info', 'console.debug'], // Remove specific console functions
+        passes: 2, // Run multiple compression passes for better minification
+      },
+      mangle: {
+        toplevel: true, // Mangle top-level variable names
+        properties: {
+          regex: /^_/, // Mangle properties starting with underscore
+        },
+      },
+      format: {
+        comments: false, // Remove all comments
+      },
+    },
     // Target modern browsers for smaller bundles
     target: 'esnext',
   },
@@ -30,4 +47,3 @@ export default defineConfig({
     include: ['react', 'react-dom'],
   },
 })
-
