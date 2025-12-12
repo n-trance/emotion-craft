@@ -1342,7 +1342,8 @@ export const App = () => {
         <section className="section crafting-section">
           <h2>Crafting Area</h2>
           <p className="crafting-instructions">
-            Click emotions from below to add them to crafting slots, then combine them!
+            Click emotions from below to add them to crafting slots, then
+            combine them!
           </p>
 
           <div className="crafting-area" ref={craftingAreaRef}>
@@ -1799,7 +1800,9 @@ export const App = () => {
                             return (
                               <button
                                 key={value}
-                                className={`filter-button ${isSelected ? "active" : ""}`}
+                                className={`filter-button ${
+                                  isSelected ? "active" : ""
+                                }`}
                                 onClick={() =>
                                   toggleDimensionValue(dimension, value)
                                 }
@@ -2508,11 +2511,10 @@ export const App = () => {
                   from our interactions with the world around us.
                 </p>
                 <p style={{ marginBottom: 0 }}>
-                  Base emotions like <strong>Joy</strong>, <strong>Trust</strong>,{" "}
-                  <strong>Fear</strong>, <strong>Surprise</strong>,{" "}
-                  <strong>Sadness</strong>, <strong>Disgust</strong>,{" "}
-                  <strong>Anger</strong>, and <strong>Anticipation</strong> form
-                  the foundation of our emotional landscape and can be combined to
+                  Base emotions like <strong>Joy</strong>, <strong>Fear</strong>
+                  , <strong>Surprise</strong>, <strong>Sadness</strong>,{" "}
+                  <strong>Disgust</strong>, and <strong>Anger</strong> form the
+                  foundation of our emotional landscape and can be combined to
                   create more nuanced feelings and states.
                 </p>
               </div>
@@ -2542,12 +2544,12 @@ export const App = () => {
               <div className="emotion-popup-description">
                 <p style={{ marginBottom: "1rem" }}>
                   Feelings are the personal, subjective experience of emotions
-                  combined with individual context and meaning. They represent how
-                  we interpret and experience emotions in our daily lives.
+                  combined with individual context and meaning. They represent
+                  how we interpret and experience emotions in our daily lives.
                 </p>
                 <p style={{ marginBottom: 0 }}>
-                  Feelings are often more complex than base emotions, as they can
-                  be combinations of multiple emotions or emotions filtered
+                  Feelings are often more complex than base emotions, as they
+                  can be combinations of multiple emotions or emotions filtered
                   through our personal experiences, memories, and cultural
                   background.
                 </p>
@@ -2578,9 +2580,9 @@ export const App = () => {
               <div className="emotion-popup-description">
                 <p style={{ marginBottom: "1rem" }}>
                   States are more stable and enduring emotional conditions that
-                  represent a particular way of being or existing. Unlike fleeting
-                  emotions or feelings, states often describe a sustained
-                  condition or quality of experience.
+                  represent a particular way of being or existing. Unlike
+                  fleeting emotions or feelings, states often describe a
+                  sustained condition or quality of experience.
                 </p>
                 <p style={{ marginBottom: 0 }}>
                   They can be the result of combining multiple emotions and
@@ -2610,329 +2612,361 @@ export const App = () => {
               ×
             </button>
             <div className="emotion-popup-content-inner">
-              <div className="emotion-popup-title" style={{ marginBottom: "0.75rem" }}>
+              <div
+                className="emotion-popup-title"
+                style={{ marginBottom: "0.75rem" }}
+              >
                 Emotion Finder
               </div>
               <div
                 className="emotion-popup-description"
                 style={{ display: "grid", gap: "1rem", marginTop: 0 }}
               >
-              {/* Mode Toggle */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                <label
+                {/* Mode Toggle */}
+                <div
                   style={{
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    color: "#0f172a",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.75rem",
                   }}
                 >
-                  Search Mode
-                </label>
-                <div className="finder-mode-toggle">
-                  <button
-                    className={`finder-mode-button ${
-                      finderMode === "dimensions" ? "active" : ""
-                    }`}
-                    onClick={() => setFinderMode("dimensions")}
-                  >
-                    Dimensions
-                  </button>
-                  <button
-                    className={`finder-mode-button ${
-                      finderMode === "text" ? "active" : ""
-                    }`}
-                    onClick={() => setFinderMode("text")}
-                  >
-                    Description
-                  </button>
-                </div>
-              </div>
-
-              {/* Dimensions Mode */}
-              {finderMode === "dimensions" && (
-                <>
-                  <p
+                  <label
                     style={{
-                      marginBottom: 0,
-                      fontSize: "0.875rem",
-                      color: "#64748b",
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                      color: "#0f172a",
                     }}
                   >
-                    Pick dimension values to see emotions that match those
-                    attributes. Leave any blank to ignore it.
-                  </p>
-                  {/* Type Filter */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.125rem",
-                        flexWrap: "wrap",
-                        marginBottom: 0,
-                      }}
+                    Search Mode
+                  </label>
+                  <div className="finder-mode-toggle">
+                    <button
+                      className={`finder-mode-button ${
+                        finderMode === "dimensions" ? "active" : ""
+                      }`}
+                      onClick={() => setFinderMode("dimensions")}
                     >
-                      <label style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: 0 }}>
-                        Type
-                      </label>
-                      <button
-                        className={`finder-description-toggle ${
-                          expandedDescriptions.has("type") ? "rotated" : ""
-                        }`}
-                        onClick={() => {
-                          const key = "type";
-                          setExpandedDescriptions((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(key)) {
-                              next.delete(key);
-                            } else {
-                              next.add(key);
-                            }
-                            return next;
-                          });
-                        }}
-                        aria-label="Toggle description"
-                      >
-                        ›
-                      </button>
-                    </div>
-                    {expandedDescriptions.has("type") && (
-                      <div className="finder-description-text" style={{ marginTop: 0 }}>
-                        <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
-                          <strong>Emotion:</strong> Base psychological states (Joy,
-                          Trust, Fear, etc.). These are the fundamental building blocks
-                          of emotional experience.
-                        </p>
-                        <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
-                          <strong>Feeling:</strong> Personal, subjective experiences of
-                          emotions. Feelings are how we personally experience and
-                          interpret emotions in our lives.
-                        </p>
-                        <p style={{ marginTop: 0, marginBottom: 0 }}>
-                          <strong>State:</strong> More stable, enduring emotional
-                          conditions. States persist over longer periods and represent
-                          sustained emotional patterns.
-                        </p>
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.35rem",
-                      }}
+                      Dimensions
+                    </button>
+                    <button
+                      className={`finder-mode-button ${
+                        finderMode === "text" ? "active" : ""
+                      }`}
+                      onClick={() => setFinderMode("text")}
                     >
-                      {(
-                        ["all", "emotion", "feeling", "state"] as FilterType[]
-                      ).map((type) => {
-                        const isActive = finderTypeFilter === type;
-                        return (
-                          <button
-                            key={type}
-                            className={`filter-button ${
-                              isActive ? "active" : ""
-                            }`}
-                            onClick={() => setFinderTypeFilter(type)}
-                          >
-                            {type}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      Description
+                    </button>
                   </div>
-                  <div style={{ display: "grid", gap: "1rem" }}>
-                    {finderDimensions.map((dimension) => (
+                </div>
+
+                {/* Dimensions Mode */}
+                {finderMode === "dimensions" && (
+                  <>
+                    <p
+                      style={{
+                        marginBottom: 0,
+                        fontSize: "0.875rem",
+                        color: "#64748b",
+                      }}
+                    >
+                      Pick dimension values to see emotions that match those
+                      attributes. Leave any blank to ignore it.
+                    </p>
+                    {/* Type Filter */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0,
+                      }}
+                    >
                       <div
-                        key={dimension}
                         style={{
                           display: "flex",
-                          flexDirection: "column",
-                          gap: 0,
+                          alignItems: "center",
+                          gap: "0.125rem",
+                          flexWrap: "wrap",
+                          marginBottom: 0,
                         }}
                       >
-                        <div
+                        <label
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.125rem",
-                            flexWrap: "wrap",
+                            fontWeight: 700,
+                            fontSize: "0.9rem",
                             marginBottom: 0,
                           }}
                         >
-                          <label
-                            style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: 0 }}
-                          >
-                            {getDimensionDisplayName(dimension)}
-                          </label>
-                          <button
-                            className={`finder-description-toggle ${
-                              expandedDescriptions.has(dimension)
-                                ? "rotated"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              setExpandedDescriptions((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(dimension)) {
-                                  next.delete(dimension);
-                                } else {
-                                  next.add(dimension);
-                                }
-                                return next;
-                              });
-                            }}
-                            aria-label="Toggle description"
-                          >
-                            ›
-                          </button>
-                        </div>
-                        {dimensionTooltips &&
-                          dimensionTooltips[dimension] &&
-                          expandedDescriptions.has(dimension) && (
-                            <div className="finder-description-text" style={{ marginTop: 0 }}>
-                              {formatDimensionTooltip(dimensionTooltips[dimension])}
-                            </div>
-                          )}
+                          Type
+                        </label>
+                        <button
+                          className={`finder-description-toggle ${
+                            expandedDescriptions.has("type") ? "rotated" : ""
+                          }`}
+                          onClick={() => {
+                            const key = "type";
+                            setExpandedDescriptions((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(key)) {
+                                next.delete(key);
+                              } else {
+                                next.add(key);
+                              }
+                              return next;
+                            });
+                          }}
+                          aria-label="Toggle description"
+                        >
+                          ›
+                        </button>
+                      </div>
+                      {expandedDescriptions.has("type") && (
                         <div
+                          className="finder-description-text"
+                          style={{ marginTop: 0 }}
+                        >
+                          <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+                            <strong>Emotion:</strong> Base psychological states
+                            (Joy, Trust, Fear, etc.). These are the fundamental
+                            building blocks of emotional experience.
+                          </p>
+                          <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+                            <strong>Feeling:</strong> Personal, subjective
+                            experiences of emotions. Feelings are how we
+                            personally experience and interpret emotions in our
+                            lives.
+                          </p>
+                          <p style={{ marginTop: 0, marginBottom: 0 }}>
+                            <strong>State:</strong> More stable, enduring
+                            emotional conditions. States persist over longer
+                            periods and represent sustained emotional patterns.
+                          </p>
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        {(
+                          ["all", "emotion", "feeling", "state"] as FilterType[]
+                        ).map((type) => {
+                          const isActive = finderTypeFilter === type;
+                          return (
+                            <button
+                              key={type}
+                              className={`filter-button ${
+                                isActive ? "active" : ""
+                              }`}
+                              onClick={() => setFinderTypeFilter(type)}
+                            >
+                              {type}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gap: "1rem" }}>
+                      {finderDimensions.map((dimension) => (
+                        <div
+                          key={dimension}
                           style={{
                             display: "flex",
-                            flexWrap: "wrap",
-                            gap: "0.35rem",
+                            flexDirection: "column",
+                            gap: 0,
                           }}
                         >
-                          {(dimensionValues?.[dimension] || []).map((val) => {
-                            const isActive =
-                              finderSelections[dimension] === val;
-                            return (
-                              <button
-                                key={val}
-                                className={`filter-button ${
-                                  isActive ? "active" : ""
-                                }`}
-                                onClick={() =>
-                                  setFinderSelections((prev) => ({
-                                    ...prev,
-                                    [dimension]: isActive ? undefined : val,
-                                  }))
-                                }
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.125rem",
+                              flexWrap: "wrap",
+                              marginBottom: 0,
+                            }}
+                          >
+                            <label
+                              style={{
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                marginBottom: 0,
+                              }}
+                            >
+                              {getDimensionDisplayName(dimension)}
+                            </label>
+                            <button
+                              className={`finder-description-toggle ${
+                                expandedDescriptions.has(dimension)
+                                  ? "rotated"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                setExpandedDescriptions((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(dimension)) {
+                                    next.delete(dimension);
+                                  } else {
+                                    next.add(dimension);
+                                  }
+                                  return next;
+                                });
+                              }}
+                              aria-label="Toggle description"
+                            >
+                              ›
+                            </button>
+                          </div>
+                          {dimensionTooltips &&
+                            dimensionTooltips[dimension] &&
+                            expandedDescriptions.has(dimension) && (
+                              <div
+                                className="finder-description-text"
+                                style={{ marginTop: 0 }}
                               >
-                                {getDimensionValueLabel(dimension, val)}
-                              </button>
-                            );
-                          })}
+                                {formatDimensionTooltip(
+                                  dimensionTooltips[dimension]
+                                )}
+                              </div>
+                            )}
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "0.35rem",
+                            }}
+                          >
+                            {(dimensionValues?.[dimension] || []).map((val) => {
+                              const isActive =
+                                finderSelections[dimension] === val;
+                              return (
+                                <button
+                                  key={val}
+                                  className={`filter-button ${
+                                    isActive ? "active" : ""
+                                  }`}
+                                  onClick={() =>
+                                    setFinderSelections((prev) => ({
+                                      ...prev,
+                                      [dimension]: isActive ? undefined : val,
+                                    }))
+                                  }
+                                >
+                                  {getDimensionValueLabel(dimension, val)}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                      ))}
+                    </div>
+                  </>
+                )}
 
-              {/* Description Mode */}
-              {finderMode === "text" && (
-                <>
-                  <p
-                    style={{
-                      marginBottom: 0,
-                      fontSize: "0.875rem",
-                      color: "#64748b",
-                    }}
-                  >
-                    Search for emotions, feelings, or states by name or
-                    description.
-                  </p>
+                {/* Description Mode */}
+                {finderMode === "text" && (
+                  <>
+                    <p
+                      style={{
+                        marginBottom: 0,
+                        fontSize: "0.875rem",
+                        color: "#64748b",
+                      }}
+                    >
+                      Search for emotions, feelings, or states by name or
+                      description.
+                    </p>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.75rem",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div
+                        className="finder-text-search-container"
+                        style={{ flex: "1 1 auto", minWidth: "200px" }}
+                      >
+                        <input
+                          type="text"
+                          className="finder-text-search-input"
+                          placeholder="Search by name or description..."
+                          value={finderTextSearch}
+                          onChange={(e) => setFinderTextSearch(e.target.value)}
+                        />
+                        {finderTextSearch && (
+                          <button
+                            className="finder-text-search-clear-button"
+                            onClick={() => setFinderTextSearch("")}
+                            aria-label="Clear search"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        className="reset-button"
+                        onClick={resetEmotionFinder}
+                        style={{ flexShrink: 0 }}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </>
+                )}
+                {/* Buttons for Dimensions Mode */}
+                {finderMode === "dimensions" && (
                   <div
                     style={{
                       display: "flex",
                       gap: "0.75rem",
+                      marginTop: "0.25rem",
+                      justifyContent: "flex-end",
                       alignItems: "center",
                       flexWrap: "wrap",
                     }}
                   >
-                    <div
-                      className="finder-text-search-container"
-                      style={{ flex: "1 1 auto", minWidth: "200px" }}
+                    <button
+                      className="combine-button"
+                      onClick={runEmotionFinder}
                     >
-                      <input
-                        type="text"
-                        className="finder-text-search-input"
-                        placeholder="Search by name or description..."
-                        value={finderTextSearch}
-                        onChange={(e) => setFinderTextSearch(e.target.value)}
-                      />
-                      {finderTextSearch && (
-                        <button
-                          className="finder-text-search-clear-button"
-                          onClick={() => setFinderTextSearch("")}
-                          aria-label="Clear search"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
+                      Find
+                    </button>
                     <button
                       className="reset-button"
                       onClick={resetEmotionFinder}
-                      style={{ flexShrink: 0 }}
                     >
                       Clear
                     </button>
                   </div>
-                </>
-              )}
-              {/* Buttons for Dimensions Mode */}
-              {finderMode === "dimensions" && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.75rem",
-                    marginTop: "0.25rem",
-                    justifyContent: "flex-end",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <button className="combine-button" onClick={runEmotionFinder}>
-                    Find
-                  </button>
-                  <button className="reset-button" onClick={resetEmotionFinder}>
-                    Clear
-                  </button>
-                </div>
-              )}
-              <div style={{ marginTop: "0.5rem" }}>
-                {finderResults.length === 0 ? (
-                  <p style={{ marginBottom: 0, color: "#94a3b8" }}>
-                    {finderMode === "dimensions"
-                      ? "No matches yet. Choose dimension values and click Find."
-                      : "No matches yet. Start typing to search."}
-                  </p>
-                ) : (
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}
-                  >
-                    {finderResults.map((emotion) => (
-                      <EmotionChip
-                        key={emotion}
-                        emotion={emotion}
-                        onClick={() => handleFinderEmotionSelect(emotion)}
-                      />
-                    ))}
-                  </div>
                 )}
+                <div style={{ marginTop: "0.5rem" }}>
+                  {finderResults.length === 0 ? (
+                    <p style={{ marginBottom: 0, color: "#94a3b8" }}>
+                      {finderMode === "dimensions"
+                        ? "No matches yet. Choose dimension values and click Find."
+                        : "No matches yet. Start typing to search."}
+                    </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.6rem",
+                      }}
+                    >
+                      {finderResults.map((emotion) => (
+                        <EmotionChip
+                          key={emotion}
+                          emotion={emotion}
+                          onClick={() => handleFinderEmotionSelect(emotion)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             </div>
           </div>
         </div>

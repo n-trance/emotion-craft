@@ -91,20 +91,20 @@ export const Modals: FC<ModalsProps> = ({
             <div className="emotion-popup-content-inner">
               <div className="emotion-popup-title">Emotions</div>
               <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                Emotions are complex psychological states that involve subjective
-                experience, physiological responses, and behavioral expressions.
-                They are fundamental human experiences that arise from our
-                interactions with the world around us.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                Base emotions like <strong>Joy</strong>, <strong>Trust</strong>,
-                <strong> Fear</strong>, <strong>Surprise</strong>,
-                <strong> Sadness</strong>, <strong>Disgust</strong>,
-                <strong> Anger</strong>, and <strong>Anticipation</strong> form
-                the foundation of our emotional landscape and can be combined to
-                create more nuanced feelings and states.
-              </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  Emotions are complex psychological states that involve
+                  subjective experience, physiological responses, and behavioral
+                  expressions. They are fundamental human experiences that arise
+                  from our interactions with the world around us.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  Base emotions like <strong>Joy</strong>,{" "}
+                  <strong> Fear</strong>,{" "}
+                  <strong>Surprise</strong>,<strong> Sadness</strong>,{" "}
+                  <strong>Disgust</strong>, and <strong> Anger</strong> form the foundation of our
+                  emotional landscape and can be combined to create more nuanced
+                  feelings and states.
+                </p>
               </div>
             </div>
           </div>
@@ -130,18 +130,18 @@ export const Modals: FC<ModalsProps> = ({
             <div className="emotion-popup-content-inner">
               <div className="emotion-popup-title">Feelings</div>
               <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                Feelings are the personal, subjective experiences that arise
-                when we interpret and make sense of our emotions. Unlike
-                emotions, which are universal, feelings are shaped by individual
-                history, culture, and context.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                They often represent combinations of multiple emotions filtered
-                through personal experience. For example, gratitude combines
-                trust, love, and joy filtered through appreciation and
-                recognition of kindness.
-              </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  Feelings are the personal, subjective experiences that arise
+                  when we interpret and make sense of our emotions. Unlike
+                  emotions, which are universal, feelings are shaped by
+                  individual history, culture, and context.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  They often represent combinations of multiple emotions
+                  filtered through personal experience. For example, gratitude
+                  combines trust, love, and joy filtered through appreciation
+                  and recognition of kindness.
+                </p>
               </div>
             </div>
           </div>
@@ -167,16 +167,16 @@ export const Modals: FC<ModalsProps> = ({
             <div className="emotion-popup-content-inner">
               <div className="emotion-popup-title">States</div>
               <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                States are more stable and enduring emotional conditions that
-                shape our ongoing experience. They influence how we perceive and
-                interact with the world over longer periods.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                Examples include tranquility, melancholy, or vigilance—each
-                representing a settled way of being rather than a fleeting
-                emotional response.
-              </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  States are more stable and enduring emotional conditions that
+                  shape our ongoing experience. They influence how we perceive
+                  and interact with the world over longer periods.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  Examples include tranquility, melancholy, or vigilance—each
+                  representing a settled way of being rather than a fleeting
+                  emotional response.
+                </p>
               </div>
             </div>
           </div>
@@ -202,32 +202,32 @@ export const Modals: FC<ModalsProps> = ({
             <div className="emotion-popup-content-inner">
               <div className="emotion-popup-title">Type</div>
               <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                The Type field categorizes emotional experiences into three
-                distinct categories:
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Emotions</strong> are complex psychological states that
-                involve subjective experience, physiological responses, and
-                behavioral expressions. Base emotions like Joy, Trust, Fear,
-                Surprise, Sadness, Disgust, Anger, and Anticipation form the
-                foundation of our emotional landscape.
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Feelings</strong> are the personal, subjective
-                experience of emotions combined with individual context and
-                meaning. They represent how we interpret and experience emotions
-                in our daily lives, often as combinations of multiple emotions
-                filtered through our personal experiences, memories, and
-                cultural background.
-              </p>
-              <p>
-                <strong>States</strong> are more stable and enduring emotional
-                conditions that represent a particular way of being or existing.
-                Unlike fleeting emotions or feelings, states often describe a
-                sustained condition or quality of experience that shapes how we
-                perceive and interact with the world.
-              </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  The Type field categorizes emotional experiences into three
+                  distinct categories:
+                </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  <strong>Emotions</strong> are complex psychological states
+                  that involve subjective experience, physiological responses,
+                  and behavioral expressions. Base emotions like Joy, Fear,
+                  Surprise, Sadness, Disgust,and Anger form the foundation of
+                  our emotional landscape.
+                </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  <strong>Feelings</strong> are the personal, subjective
+                  experience of emotions combined with individual context and
+                  meaning. They represent how we interpret and experience
+                  emotions in our daily lives, often as combinations of multiple
+                  emotions filtered through our personal experiences, memories,
+                  and cultural background.
+                </p>
+                <p>
+                  <strong>States</strong> are more stable and enduring emotional
+                  conditions that represent a particular way of being or
+                  existing. Unlike fleeting emotions or feelings, states often
+                  describe a sustained condition or quality of experience that
+                  shapes how we perceive and interact with the world.
+                </p>
               </div>
             </div>
           </div>
@@ -253,32 +253,32 @@ export const Modals: FC<ModalsProps> = ({
             <div className="emotion-popup-content-inner">
               <div className="emotion-popup-title">Type</div>
               <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                The Type field categorizes emotional experiences into three
-                distinct categories:
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Emotions</strong> are complex psychological states that
-                involve subjective experience, physiological responses, and
-                behavioral expressions. Base emotions like Joy, Trust, Fear,
-                Surprise, Sadness, Disgust, Anger, and Anticipation form the
-                foundation of our emotional landscape.
-              </p>
-              <p style={{ marginBottom: "1rem" }}>
-                <strong>Feelings</strong> are the personal, subjective
-                experience of emotions combined with individual context and
-                meaning. They represent how we interpret and experience emotions
-                in our daily lives, often as combinations of multiple emotions
-                filtered through our personal experiences, memories, and
-                cultural background.
-              </p>
-              <p>
-                <strong>States</strong> are more stable and enduring emotional
-                conditions that represent a particular way of being or existing.
-                Unlike fleeting emotions or feelings, states often describe a
-                sustained condition or quality of experience that shapes how we
-                perceive and interact with the world.
-              </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  The Type field categorizes emotional experiences into three
+                  distinct categories:
+                </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  <strong>Emotions</strong> are complex psychological states
+                  that involve subjective experience, physiological responses,
+                  and behavioral expressions. Base emotions like Joy,
+                  Fear, Surprise, Sadness, Disgust, and Anger form
+                  the foundation of our emotional landscape.
+                </p>
+                <p style={{ marginBottom: "1rem" }}>
+                  <strong>Feelings</strong> are the personal, subjective
+                  experience of emotions combined with individual context and
+                  meaning. They represent how we interpret and experience
+                  emotions in our daily lives, often as combinations of multiple
+                  emotions filtered through our personal experiences, memories,
+                  and cultural background.
+                </p>
+                <p>
+                  <strong>States</strong> are more stable and enduring emotional
+                  conditions that represent a particular way of being or
+                  existing. Unlike fleeting emotions or feelings, states often
+                  describe a sustained condition or quality of experience that
+                  shapes how we perceive and interact with the world.
+                </p>
               </div>
             </div>
           </div>
@@ -307,7 +307,9 @@ export const Modals: FC<ModalsProps> = ({
               </div>
               <div className="emotion-popup-description">
                 {dimensionTooltips && selectedDimensionModal
-                  ? formatDimensionTooltip(dimensionTooltips[selectedDimensionModal])
+                  ? formatDimensionTooltip(
+                      dimensionTooltips[selectedDimensionModal]
+                    )
                   : null}
               </div>
             </div>
