@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export const BASE_EMOTIONS: string[] = [
   "Joy",
   "Fear",
@@ -48,6 +50,14 @@ export const BASE_EMOTION_SHAPES: Record<string, EmotionShape> = {
 export type FilterType = "emotion" | "feeling" | "state" | "all";
 
 export const FILTER_TYPES: FilterType[] = ["all", "emotion", "feeling", "state"];
+
+export const getTypeFilterDescription = (): ReactNode => (
+  <>
+    <strong>Emotion:</strong> Fundamental psychological states that form the building blocks of our emotional experience (Joy, Trust, Fear, Surprise, Sadness, Disgust, Anger, Anticipation).{" "}
+    <strong>Feeling:</strong> Personal, subjective experiences that combine emotions with individual context, memories, and meaning.{" "}
+    <strong>State:</strong> Stable, enduring emotional conditions that shape our ongoing experience over longer periods (tranquility, melancholy, vigilance).
+  </>
+);
 
 export const SORT_ORDERS = ["alphabetical", "available"] as const;
 export type SortOrder = typeof SORT_ORDERS[number];
