@@ -1,5 +1,4 @@
 import type { FC, CSSProperties } from "react";
-import { getEmotionColor } from "../utils/emotions";
 
 interface StickyCraftingBarProps {
   craftingSlots: string[];
@@ -8,6 +7,8 @@ interface StickyCraftingBarProps {
   onCombine: () => void;
   onScrollToCrafting: () => void;
   isCombining: boolean;
+  getEmotionColor: (emotion: string) => string;
+  getEmotionBorderColor: (emotion: string) => string;
 }
 
 export const StickyCraftingBar: FC<StickyCraftingBarProps> = ({
@@ -17,6 +18,8 @@ export const StickyCraftingBar: FC<StickyCraftingBarProps> = ({
   onCombine,
   onScrollToCrafting,
   isCombining,
+  getEmotionColor,
+  getEmotionBorderColor,
 }) => {
   if (craftingSlots.length === 0) {
     return null;
@@ -29,30 +32,38 @@ export const StickyCraftingBar: FC<StickyCraftingBarProps> = ({
           Crafting ({craftingSlots.length}):
         </div>
         <div className="sticky-crafting-items">
-          {craftingSlots.map((emotion, index) => (
-            <div
-              key={index}
-              className="sticky-crafting-item"
-              style={{
-                "--emotion-color": getEmotionColor(emotion),
-              } as CSSProperties}
-            >
-              {emotion}
-              <button
-                className="remove-button"
-                onClick={() => onRemoveSlot(index)}
-                aria-label="Remove emotion"
+          {craftingSlots.map((emotion, index) => {
+            const emotionColor = getEmotionColor(emotion);
+            const isGradient = emotionColor.includes("linear-gradient");
+            const borderColor = getEmotionBorderColor(emotion);
+            return (
+              <div
+                key={index}
+                className="sticky-crafting-item"
+                style={{
+                  background: isGradient ? emotionColor : undefined,
+                  "--emotion-color": emotionColor,
+                  "--emotion-border-color": isGradient ? "transparent" : borderColor,
+                  borderColor: isGradient ? "transparent" : undefined,
+                } as CSSProperties}
               >
-                ×
-              </button>
-            </div>
-          ))}
+                {emotion}
+                <button
+                  className="remove-button"
+                  onClick={() => onRemoveSlot(index)}
+                  aria-label="Remove emotion"
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
         <div className="sticky-crafting-actions">
           <button
             className="combine-button"
             onClick={onCombine}
-            disabled={craftingSlots.length < 2 || isCombining}
+            disabled={craftingSlots.length < 1 || isCombining}
           >
             {isCombining ? (
               <>

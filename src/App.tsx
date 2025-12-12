@@ -301,7 +301,6 @@ export const App = () => {
   const [recentlyAddedEmotion, setRecentlyAddedEmotion] = useState<
     string | null
   >(null);
-  const [mode, setMode] = useState<"view" | "craft">("craft");
   const [isLoading, setIsLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(true);
 
@@ -827,13 +826,7 @@ export const App = () => {
       return;
     }
 
-    // Check current mode
-    if (mode === "view") {
-      viewFeelingDetails(emotion);
-      return;
-    }
-
-    // Craft mode: Add emotion to crafting slots
+    // Add emotion to crafting slots
     // Prevent adding emotion if it's already in crafting slots
     if (craftingSlots.includes(emotion)) {
       return;
@@ -970,7 +963,7 @@ export const App = () => {
   };
 
   const handleCombine = async () => {
-    if (craftingSlots.length < 2) {
+    if (craftingSlots.length < 1) {
       return;
     }
 
@@ -986,6 +979,33 @@ export const App = () => {
 
     // Simulate processing time for better UX
     await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // If only one item, just show it as the result
+    if (craftingSlots.length === 1) {
+      const singleEmotion = craftingSlots[0];
+      setLastResult(singleEmotion);
+      setLastCombination([singleEmotion]); // Show it in the result display
+      setIsNewDiscovery(false); // Single item view doesn't count as new discovery
+      setIsCombining(false);
+
+      // Clear slots after showing result
+      setCraftingSlots([]);
+      clearHighlight();
+      setHasAttemptedCombine(false);
+      autoCombineTriggered.current = false;
+
+      // Scroll to result display
+      setTimeout(() => {
+        if (resultDisplayRef.current) {
+          const elementTop = resultDisplayRef.current.offsetTop;
+          window.scrollTo({
+            top: elementTop,
+            behavior: "smooth",
+          });
+        }
+      }, 100);
+      return;
+    }
 
     // Try to combine all emotions
     const result = combineMultipleEmotions(craftingSlots);
@@ -1294,8 +1314,6 @@ export const App = () => {
     <div className="App">
       <Header
         totalDiscoveries={totalDiscoveries}
-        mode={mode}
-        onModeChange={setMode}
         onReset={resetProgress}
         onFinderClick={() => {
           resetEmotionFinder();
@@ -1304,29 +1322,27 @@ export const App = () => {
       />
 
       {/* Sticky Mini Crafting Bar */}
-      {mode === "craft" && (
-        <StickyCraftingBar
-          craftingSlots={craftingSlots}
-          onRemoveSlot={removeSlot}
-          onClear={clearAll}
-          onCombine={handleCombine}
-          onScrollToCrafting={() => {
-            craftingAreaRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }}
-          isCombining={isCombining}
-        />
-      )}
+      <StickyCraftingBar
+        craftingSlots={craftingSlots}
+        onRemoveSlot={removeSlot}
+        onClear={clearAll}
+        onCombine={handleCombine}
+        onScrollToCrafting={() => {
+          craftingAreaRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }}
+        isCombining={isCombining}
+        getEmotionColor={getEmotionColor}
+        getEmotionBorderColor={getEmotionBorderColor}
+      />
 
       <main className="main-content">
         <section className="section crafting-section">
           <h2>Crafting Area</h2>
           <p className="crafting-instructions">
-            {mode === "view"
-              ? "Click emotions from below to view their details, or right-click/Cmd+click to view in any mode."
-              : "Click emotions from below to add them to crafting slots, then combine them!"}
+            Click emotions from below to add them to crafting slots, then combine them!
           </p>
 
           <div className="crafting-area" ref={craftingAreaRef}>
@@ -2454,11 +2470,13 @@ export const App = () => {
             <button className="emotion-popup-close" onClick={closeEmotionPopup}>
               ×
             </button>
-            <div className="emotion-popup-title">{selectedEmotionPopup}</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: 0 }}>
-                {getFeelingDescription(selectedEmotionPopup)}
-              </p>
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">{selectedEmotionPopup}</div>
+              <div className="emotion-popup-description">
+                <p style={{ marginBottom: 0 }}>
+                  {getFeelingDescription(selectedEmotionPopup)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -2480,22 +2498,24 @@ export const App = () => {
             >
               ×
             </button>
-            <div className="emotion-popup-title">Emotions</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                Emotions are complex psychological states that involve
-                subjective experience, physiological responses, and behavioral
-                expressions. They are fundamental human experiences that arise
-                from our interactions with the world around us.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                Base emotions like <strong>Joy</strong>, <strong>Trust</strong>,{" "}
-                <strong>Fear</strong>, <strong>Surprise</strong>,{" "}
-                <strong>Sadness</strong>, <strong>Disgust</strong>,{" "}
-                <strong>Anger</strong>, and <strong>Anticipation</strong> form
-                the foundation of our emotional landscape and can be combined to
-                create more nuanced feelings and states.
-              </p>
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Emotions</div>
+              <div className="emotion-popup-description">
+                <p style={{ marginBottom: "1rem" }}>
+                  Emotions are complex psychological states that involve
+                  subjective experience, physiological responses, and behavioral
+                  expressions. They are fundamental human experiences that arise
+                  from our interactions with the world around us.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  Base emotions like <strong>Joy</strong>, <strong>Trust</strong>,{" "}
+                  <strong>Fear</strong>, <strong>Surprise</strong>,{" "}
+                  <strong>Sadness</strong>, <strong>Disgust</strong>,{" "}
+                  <strong>Anger</strong>, and <strong>Anticipation</strong> form
+                  the foundation of our emotional landscape and can be combined to
+                  create more nuanced feelings and states.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -2517,19 +2537,21 @@ export const App = () => {
             >
               ×
             </button>
-            <div className="emotion-popup-title">Feelings</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                Feelings are the personal, subjective experience of emotions
-                combined with individual context and meaning. They represent how
-                we interpret and experience emotions in our daily lives.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                Feelings are often more complex than base emotions, as they can
-                be combinations of multiple emotions or emotions filtered
-                through our personal experiences, memories, and cultural
-                background.
-              </p>
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Feelings</div>
+              <div className="emotion-popup-description">
+                <p style={{ marginBottom: "1rem" }}>
+                  Feelings are the personal, subjective experience of emotions
+                  combined with individual context and meaning. They represent how
+                  we interpret and experience emotions in our daily lives.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  Feelings are often more complex than base emotions, as they can
+                  be combinations of multiple emotions or emotions filtered
+                  through our personal experiences, memories, and cultural
+                  background.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -2551,19 +2573,21 @@ export const App = () => {
             >
               ×
             </button>
-            <div className="emotion-popup-title">State</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: "1rem" }}>
-                States are more stable and enduring emotional conditions that
-                represent a particular way of being or existing. Unlike fleeting
-                emotions or feelings, states often describe a sustained
-                condition or quality of experience.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                They can be the result of combining multiple emotions and
-                feelings, creating a more persistent emotional landscape that
-                shapes how we perceive and interact with the world.
-              </p>
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">State</div>
+              <div className="emotion-popup-description">
+                <p style={{ marginBottom: "1rem" }}>
+                  States are more stable and enduring emotional conditions that
+                  represent a particular way of being or existing. Unlike fleeting
+                  emotions or feelings, states often describe a sustained
+                  condition or quality of experience.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  They can be the result of combining multiple emotions and
+                  feelings, creating a more persistent emotional landscape that
+                  shapes how we perceive and interact with the world.
+                </p>
+              </div>
             </div>
           </div>
         </div>

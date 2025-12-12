@@ -1,18 +1,13 @@
 import type { FC } from "react";
-import type { Mode } from "../constants/emotions";
 
 interface HeaderProps {
   totalDiscoveries: number;
-  mode: Mode;
-  onModeChange: (mode: Mode) => void;
   onReset: () => void;
   onFinderClick: () => void;
 }
 
 export const Header: FC<HeaderProps> = ({
   totalDiscoveries,
-  mode,
-  onModeChange,
   onReset,
   onFinderClick,
 }) => {
@@ -47,20 +42,6 @@ export const Header: FC<HeaderProps> = ({
             🔍
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-            <div className="finder-mode-toggle">
-              <button
-                className={`finder-mode-button ${mode === "craft" ? "active" : ""}`}
-                onClick={() => onModeChange("craft")}
-              >
-                Craft
-              </button>
-              <button
-                className={`finder-mode-button ${mode === "view" ? "active" : ""}`}
-                onClick={() => onModeChange("view")}
-              >
-                View
-              </button>
-            </div>
             <button
               onClick={onReset}
               className="reset-button"
