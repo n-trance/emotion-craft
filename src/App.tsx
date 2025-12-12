@@ -1,319 +1,12 @@
 import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
 import type { DimensionType } from "./data/types";
-
-const BASE_EMOTIONS = [
-  "Joy",
-  "Fear",
-  "Sadness",
-  "Disgust",
-  "Anger",
-  "Surprise",
-];
-
-// Emotion graph will be built lazily after first render
-
-// Base emotion colors
-const BASE_EMOTION_COLORS: { [key: string]: string } = {
-  Joy: "#fbbf24",
-  Fear: "#8b5cf6",
-  Surprise: "#ec4899",
-  Sadness: "#06b6d4",
-  Disgust: "#10b981",
-  Anger: "#ef4444",
-};
-
-// Base emotion shapes
-const BASE_EMOTION_SHAPES: {
-  [key: string]:
-    | "circle"
-    | "triangleDown"
-    | "star"
-    | "hexagon"
-    | "triangleUp"
-    | "oval";
-} = {
-  Joy: "circle",
-  Fear: "triangleDown",
-  Surprise: "star",
-  Sadness: "oval",
-  Disgust: "hexagon",
-  Anger: "triangleUp",
-};
-
-// Helper function to format dimension name for display
-const getDimensionDisplayName = (dimension: DimensionType): string => {
-  const nameMap: { [key in DimensionType]: string } = {
-    valence: "Valence",
-    arousal: "Arousal",
-    dominance: "Dominance",
-    temporalFocus: "Temporal Focus",
-    motivationalDirection: "Motivational Direction",
-    certainty: "Certainty",
-    intensity: "Intensity",
-    socialContext: "Social Context",
-    cognitiveAppraisal: "Cognitive Appraisal",
-    embodiment: "Embodiment",
-  };
-  return nameMap[dimension];
-};
-
-// Helper function to format dimension tooltip text for better readability
-const formatDimensionTooltip = (tooltip: string): JSX.Element => {
-  // Check if there's an "Example:" section
-  const exampleIndex = tooltip.search(/Example:/i);
-  
-  if (exampleIndex !== -1) {
-    // Split the tooltip into description and example parts
-    const description = tooltip.substring(0, exampleIndex).trim();
-    const exampleText = tooltip.substring(exampleIndex).replace(/^Example:\s*/i, '').trim();
-    
-    // Format description part (may have a title before colon)
-    const descParts = description.split(':');
-    let formattedDesc;
-    if (descParts.length >= 2) {
-      const title = descParts[0].trim();
-      const descText = descParts.slice(1).join(':').trim();
-      formattedDesc = (
-        <>
-          <strong>{title}:</strong> {descText}
-        </>
-      );
-    } else {
-      formattedDesc = description;
-    }
-    
-    return (
-      <>
-        <p style={{ marginBottom: "1rem" }}>
-          {formattedDesc}
-        </p>
-        <p style={{ marginBottom: 0 }}>
-          <strong>Example:</strong> {exampleText}
-        </p>
-      </>
-    );
-  }
-  
-  // No example found, format the whole text
-  const parts = tooltip.split(':');
-  if (parts.length >= 2) {
-    const title = parts[0].trim();
-    const rest = parts.slice(1).join(':').trim();
-    return (
-      <p style={{ marginBottom: 0 }}>
-        <strong>{title}:</strong> {rest}
-      </p>
-    );
-  }
-  
-  // Fallback: just return the text as a paragraph
-  return <p style={{ marginBottom: 0 }}>{tooltip}</p>;
-};
-
-// Helper function to get display label for dimension value
-const getDimensionValueLabel = (
-  dimension: DimensionType,
-  value: string
-): string => {
-  // Special cases for values that appear in multiple dimensions
-  const labelMap: { [key: string]: { [dim: string]: string } } = {
-    positive: {
-      valence: "Positive",
-      cognitiveAppraisal: "Positive",
-    },
-    negative: {
-      valence: "Negative",
-      cognitiveAppraisal: "Negative",
-    },
-    neutral: {
-      valence: "Neutral",
-      motivationalDirection: "Neutral",
-      cognitiveAppraisal: "Neutral",
-    },
-    high: {
-      arousal: "High",
-      dominance: "High",
-      embodiment: "High",
-    },
-    medium: {
-      arousal: "Medium",
-      dominance: "Medium",
-      intensity: "Medium",
-      embodiment: "Medium",
-    },
-    low: {
-      arousal: "Low",
-      dominance: "Low",
-      embodiment: "Low",
-    },
-    approach: { motivationalDirection: "Approach" },
-    avoidance: { motivationalDirection: "Avoidance" },
-    past: { temporalFocus: "Past" },
-    present: { temporalFocus: "Present" },
-    future: { temporalFocus: "Future" },
-    predictable: { certainty: "Predictable" },
-    uncertain: { certainty: "Uncertain" },
-    ambiguous: { certainty: "Ambiguous" },
-    weak: { intensity: "Weak" },
-    strong: { intensity: "Strong" },
-    social: { socialContext: "Social" },
-    individual: { socialContext: "Individual" },
-  };
-
-  if (labelMap[value] && labelMap[value][dimension]) {
-    return labelMap[value][dimension];
-  }
-
-  // Fallback: capitalize first letter
-  return value.charAt(0).toUpperCase() + value.slice(1);
-};
-
-// Helper function to infer dimension value from base components
-// Moved inside component to access loaded data
-const inferDimensionFromComponents = (
-  baseComponents: string[],
-  dimension: DimensionType,
-  emotionDimensions: { [key: string]: { [dimension in DimensionType]?: string } } | null
-): string | null => {
-  if (baseComponents.length === 0 || !emotionDimensions) return null;
-
-  const values = baseComponents
-    .map((comp) => emotionDimensions[comp]?.[dimension])
-    .filter((v): v is string => v !== undefined);
-
-  if (values.length === 0) return null;
-
-  // Special inference logic for different dimensions
-  switch (dimension) {
-    case "valence":
-      // If all positive -> positive, all negative -> negative, mixed -> neutral
-      const allPositive = values.every((v) => v === "positive");
-      const allNegative = values.every((v) => v === "negative");
-      if (allPositive) return "positive";
-      if (allNegative) return "negative";
-      return "neutral";
-
-    case "arousal":
-    case "dominance":
-    case "intensity":
-    case "embodiment":
-      // For ordinal dimensions, take the highest value
-      if (values.includes("high")) return "high";
-      if (values.includes("medium")) return "medium";
-      if (values.includes("low")) return "low";
-      return values[0];
-
-    case "temporalFocus":
-      // Prefer present, then future, then past
-      if (values.includes("present")) return "present";
-      if (values.includes("future")) return "future";
-      if (values.includes("past")) return "past";
-      return values[0];
-
-    case "motivationalDirection":
-      // If all approach -> approach, all avoidance -> avoidance, mixed -> neutral
-      const allApproach = values.every((v) => v === "approach");
-      const allAvoidance = values.every((v) => v === "avoidance");
-      if (allApproach) return "approach";
-      if (allAvoidance) return "avoidance";
-      return "neutral";
-
-    case "certainty":
-      // If any uncertain -> uncertain, else predictable
-      if (values.includes("uncertain") || values.includes("ambiguous"))
-        return "uncertain";
-      return "predictable";
-
-    case "socialContext":
-      // If any social -> social, else individual
-      if (values.includes("social")) return "social";
-      return "individual";
-
-    case "cognitiveAppraisal":
-      // If all positive -> positive, all negative -> negative, mixed -> neutral
-      const allPos = values.every((v) => v === "positive");
-      const allNeg = values.every((v) => v === "negative");
-      if (allPos) return "positive";
-      if (allNeg) return "negative";
-      return "neutral";
-
-    default:
-      return values[0];
-  }
-};
-
-// Helper function to get emotion dimension value
-// Accepts getBaseEmotionComponents as parameter since it's lazy-loaded
-// Moved inside component to access loaded data
-const getEmotionDimension = (
-  emotion: string,
-  dimension: DimensionType,
-  getBaseEmotionComponents: (emotion: string) => string[],
-  emotionDimensions: { [key: string]: { [dimension in DimensionType]?: string } } | null
-): string | null => {
-  if (!emotionDimensions) return null;
-  
-  // Check direct mapping first
-  if (emotionDimensions[emotion] && emotionDimensions[emotion][dimension]) {
-    return emotionDimensions[emotion][dimension] || null;
-  }
-
-  // For combined emotions, infer from base components
-  const baseComponents = getBaseEmotionComponents(emotion);
-  if (baseComponents.length > 0) {
-    return inferDimensionFromComponents(baseComponents, dimension, emotionDimensions);
-  }
-
-  return null;
-};
-
-// Use graph for combination lookup
-// Helper functions will be defined inside the component to use lazy-loaded graph
-
-// Function to generate CSS gradient from base emotion ratios
-// Gradient stops are positioned based on the actual composition percentages
-// Creates a smooth gradient where each color occupies space proportional to its ratio
-const generateGradientFromRatios = (
-  ratios: Array<{ emotion: string; ratio: number }>
-): string => {
-  if (ratios.length === 0) return "linear-gradient(135deg, #667eea, #764ba2)";
-  if (ratios.length === 1) {
-    return BASE_EMOTION_COLORS[ratios[0].emotion] || "#667eea";
-  }
-
-  // Sort by ratio (descending) to ensure proper gradient order
-  const sortedRatios = [...ratios].sort((a, b) => b.ratio - a.ratio);
-
-  // Create smooth gradient stops - CSS naturally blends between stops
-  // Each color transitions smoothly at percentage boundaries
-  const stops: string[] = [];
-  let cumulative = 0;
-
-  sortedRatios.forEach(({ emotion, ratio }, index) => {
-    const color = BASE_EMOTION_COLORS[emotion] || "#667eea";
-    const endPercent = cumulative + ratio * 100;
-
-    if (index === 0) {
-      // First color starts at 0%
-      stops.push(`${color} 0%`);
-    }
-
-    // Add stop at the boundary - CSS will smoothly blend to next color
-    if (index === sortedRatios.length - 1) {
-      // Last color at 100%
-      stops.push(`${color} 100%`);
-    } else {
-      // Add color at boundary, next color will start blending here
-      stops.push(`${color} ${endPercent}%`);
-    }
-
-    cumulative = endPercent;
-  });
-
-  return `linear-gradient(135deg, ${stops.join(", ")})`;
-};
-
+import { BASE_EMOTIONS, BASE_EMOTION_COLORS, BASE_EMOTION_SHAPES, DEFAULT_EMOTION_COLOR, UI_COLORS, type FilterType } from "./constants/emotions";
+import { getDimensionDisplayName, formatDimensionTooltip, getDimensionValueLabel } from "./utils/dimensions";
+import { getEmotionDimension, generateGradientFromRatios } from "./utils/emotions";
+import { LoadingScreen } from "./components/LoadingScreen";
+import { Header } from "./components/Header";
+import { StickyCraftingBar } from "./components/StickyCraftingBar";
 
 // Helper function to render a single shape
 const renderSingleShape = (
@@ -537,7 +230,6 @@ const BlendedEmotionShape = ({
   );
 };
 
-type FilterType = "emotion" | "feeling" | "state" | "all";
 
 export const App = () => {
   const [discoveredEmotions, setDiscoveredEmotions] = useState<Set<string>>(
@@ -547,7 +239,7 @@ export const App = () => {
   const [lastResult, setLastResult] = useState<string | null>(null);
   const [lastCombination, setLastCombination] = useState<string[]>([]);
   const [isNewDiscovery, setIsNewDiscovery] = useState(false);
-  const [totalDiscoveries, setTotalDiscoveries] = useState(
+  const [totalDiscoveries, setTotalDiscoveries] = useState<number>(
     BASE_EMOTIONS.length
   );
   const [highlightedEmotion, setHighlightedEmotion] = useState<string | null>(
@@ -1394,7 +1086,7 @@ const Modals = lazy(() => import("./components/Modals"));
   const getEmotionColor = (emotion: string) => {
     // Base emotions return their solid color
     if (BASE_EMOTIONS.includes(emotion)) {
-      return BASE_EMOTION_COLORS[emotion] || "#667eea";
+      return BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR;
     }
 
     // Combined emotions get gradients from their base emotion ratios
@@ -1404,21 +1096,21 @@ const Modals = lazy(() => import("./components/Modals"));
     }
 
     // Fallback for emotions that can't be traced
-    return "#667eea";
+    return DEFAULT_EMOTION_COLOR;
   };
 
   // Helper function to get a solid color for borders (uses first base emotion or average)
   const getEmotionBorderColor = (emotion: string) => {
     if (BASE_EMOTIONS.includes(emotion)) {
-      return BASE_EMOTION_COLORS[emotion] || "#667eea";
+      return BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR;
     }
 
     const baseComponents = getBaseEmotionComponents(emotion);
     if (baseComponents.length > 0) {
-      return BASE_EMOTION_COLORS[baseComponents[0]] || "#667eea";
+      return BASE_EMOTION_COLORS[baseComponents[0]] || DEFAULT_EMOTION_COLOR;
     }
 
-    return "#667eea";
+    return DEFAULT_EMOTION_COLOR;
   };
 
   const hasCombinableOptions = (emotion: string): boolean => {
@@ -1545,179 +1237,38 @@ const Modals = lazy(() => import("./components/Modals"));
   const statesList = sortEmotions(discoveredEmotionsList.filter((e) => getItemType(e) === "state"));
 
   // Loading screen component
-  if (showLoading) {
-    return (
-      <div className={`loading-screen ${!isLoading ? 'fade-out' : ''}`}>
-        <div className="loading-content">
-          <div className="loading-star">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
-              <path fill="#FFD700" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-          </div>
-          <h2 className="loading-title">Emotion Craft</h2>
-          <p className="loading-subtitle">Preparing your emotional journey...</p>
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state while data is being loaded
-  if (isLoading || !feelingDescriptions || !emotionDimensions || !dimensionTooltips || !dimensionValues || !emotionGraph) {
-    return (
-      <div className="App">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '1rem' }}>
-          <div className="loading-spinner" style={{ width: '48px', height: '48px' }}></div>
-          <p style={{ color: '#64748b', fontSize: '1rem' }}>Loading Emotion Craft...</p>
-        </div>
-      </div>
-    );
+  if (showLoading || isLoading || !feelingDescriptions || !emotionDimensions || !dimensionTooltips || !dimensionValues || !emotionGraph) {
+    return <LoadingScreen isLoading={isLoading} showLoading={showLoading} />;
   }
 
   return (
     <div className="App">
-      <header className="header">
-        <div className="header-content">
-          <div>
-            <h1>Emotion Craft</h1>
-            <p className="header-subtitle">
-              Combine emotions to discover new feelings
-            </p>
-          </div>
-          <div className="header-actions">
-            <div className="stats">
-              <div className="stat-item">
-                <span className="stat-value">{totalDiscoveries}</span>
-                <span className="stat-label">Discovered</span>
-              </div>
-            </div>
-            <button
-              aria-label="Emotion finder"
-              title="Find emotion by dimensions"
-              onClick={() => {
-                resetEmotionFinder();
-                setShowFinderModal(true);
-              }}
-              className="header-finder-button"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f8fafc";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffffff";
-              }}
-            >
-              🔍
-            </button>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-              <div className="finder-mode-toggle">
-                <button
-                  className={`finder-mode-button ${mode === "craft" ? "active" : ""}`}
-                  onClick={() => setMode("craft")}
-                >
-                  Craft
-                </button>
-                <button
-                  className={`finder-mode-button ${mode === "view" ? "active" : ""}`}
-                  onClick={() => setMode("view")}
-                >
-                  View
-                </button>
-              </div>
-              <button
-                onClick={resetProgress}
-                className="reset-button"
-                style={{
-                  padding: "0.375rem 0.75rem",
-                  fontSize: "0.8125rem",
-                  fontWeight: 600,
-                  border: "1px solid #ef4444",
-                  borderRadius: "6px",
-                  backgroundColor: "#ffffff",
-                  color: "#ef4444",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#fef2f2";
-                  e.currentTarget.style.borderColor = "#dc2626";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#ffffff";
-                  e.currentTarget.style.borderColor = "#ef4444";
-                }}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        totalDiscoveries={totalDiscoveries}
+        mode={mode}
+        onModeChange={setMode}
+        onReset={resetProgress}
+        onFinderClick={() => {
+          resetEmotionFinder();
+          setShowFinderModal(true);
+        }}
+      />
 
       {/* Sticky Mini Crafting Bar */}
-      {craftingSlots.length > 0 && mode === "craft" && (
-        <div className="sticky-crafting-bar">
-          <div className="sticky-crafting-content">
-            <div className="sticky-crafting-label">
-              Crafting ({craftingSlots.length}):
-            </div>
-            <div className="sticky-crafting-items">
-              {craftingSlots.map((emotion, index) => (
-                <div
-                  key={index}
-                  className="sticky-crafting-item"
-                  style={{
-                    "--emotion-color": getEmotionColor(emotion),
-                  } as React.CSSProperties}
-                >
-                  {emotion}
-                  <button
-                    className="remove-button"
-                    onClick={() => removeSlot(index)}
-                    aria-label="Remove emotion"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="sticky-crafting-actions">
-              <button
-                className="combine-button"
-                onClick={handleCombine}
-                disabled={craftingSlots.length < 2 || isCombining}
-              >
-                {isCombining ? (
-                  <>
-                    <span className="loading-spinner"></span>
-                    Combining...
-                  </>
-                ) : (
-                  <>
-                    Combine{" "}
-                    {craftingSlots.length > 0 && `(${craftingSlots.length})`}
-                  </>
-                )}
-              </button>
-              {craftingSlots.length > 0 && (
-                <button className="clear-button-small" onClick={clearAll}>
-                  Clear All
-                </button>
-              )}
-              <button
-                className="sticky-crafting-scroll"
-                onClick={() => {
-                  craftingAreaRef.current?.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                  });
-                }}
-                title="Scroll to crafting area"
-              >
-                ↑
-              </button>
-            </div>
-          </div>
-        </div>
+      {mode === "craft" && (
+        <StickyCraftingBar
+          craftingSlots={craftingSlots}
+          onRemoveSlot={removeSlot}
+          onClear={clearAll}
+          onCombine={handleCombine}
+          onScrollToCrafting={() => {
+            craftingAreaRef.current?.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }}
+          isCombining={isCombining}
+        />
       )}
 
       <main className="main-content">
@@ -1791,7 +1342,7 @@ const Modals = lazy(() => import("./components/Modals"));
                                         emotion={baseEmotion}
                                         color={
                                           BASE_EMOTION_COLORS[baseEmotion] ||
-                                          "#667eea"
+                                          DEFAULT_EMOTION_COLOR
                                         }
                                         size={12}
                                       />
@@ -1871,7 +1422,7 @@ const Modals = lazy(() => import("./components/Modals"));
                               <EmotionShape
                                 emotion={emotion}
                                 color={
-                                  BASE_EMOTION_COLORS[emotion] || "#667eea"
+                                  BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR
                                 }
                                 size={16}
                               />
@@ -1883,7 +1434,7 @@ const Modals = lazy(() => import("./components/Modals"));
                                 style={{
                                   width: `${ratio * 100}%`,
                                   backgroundColor:
-                                    BASE_EMOTION_COLORS[emotion] || "#667eea",
+                                    BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR,
                                 }}
                               />
                             </div>
@@ -2053,8 +1604,8 @@ const Modals = lazy(() => import("./components/Modals"));
                       transition: "all 0.15s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#667eea";
-                      e.currentTarget.style.color = "#667eea";
+                      e.currentTarget.style.borderColor = UI_COLORS.PRIMARY;
+                      e.currentTarget.style.color = UI_COLORS.PRIMARY;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.borderColor = "#94a3b8";
@@ -2077,7 +1628,7 @@ const Modals = lazy(() => import("./components/Modals"));
                           style={{
                             padding: "0.375rem 0.75rem",
                             fontSize: "0.8125rem",
-                            backgroundColor: isSelected ? "#667eea" : "#e5e7eb",
+                            backgroundColor: isSelected ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND_GRAY,
                             color: isSelected ? "white" : "#374151",
                             border: "none",
                             borderRadius: "4px",
@@ -2230,7 +1781,7 @@ const Modals = lazy(() => import("./components/Modals"));
                     fontSize: "0.8125rem",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
-                    backgroundColor: sortOrder === "alphabetical" ? "#667eea" : "#ffffff",
+                    backgroundColor: sortOrder === "alphabetical" ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND,
                     color: sortOrder === "alphabetical" ? "#ffffff" : "#64748b",
                     cursor: "pointer",
                     fontWeight: "500",
@@ -2247,7 +1798,7 @@ const Modals = lazy(() => import("./components/Modals"));
                     fontSize: "0.8125rem",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
-                    backgroundColor: sortOrder === "available" ? "#667eea" : "#ffffff",
+                    backgroundColor: sortOrder === "available" ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND,
                     color: sortOrder === "available" ? "#ffffff" : "#64748b",
                     cursor: "pointer",
                     fontWeight: "500",

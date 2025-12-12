@@ -1,4 +1,4 @@
-import React from "react";
+import type { FC } from "react";
 import type { DimensionType } from "../data/types";
 
 interface ModalsProps {
@@ -22,7 +22,7 @@ interface ModalsProps {
   getFeelingDescription: (emotion: string) => string;
 }
 
-export const Modals: React.FC<ModalsProps> = ({
+export const Modals: FC<ModalsProps> = ({
   showTypeModal,
   setShowTypeModal,
   showTypeFilterModal,
