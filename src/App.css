@@ -386,6 +386,7 @@ button,
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  text-transform: capitalize;
 }
 
 .filter-button:hover {
@@ -1984,26 +1985,31 @@ button,
 }
 
 .finder-description-toggle {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
+  background: none;
+  border: none;
   display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 400;
   color: #64748b;
-  padding: 0;
-  transition: all 0.15s ease;
+  padding: 0.625rem 0.625rem 0.625rem 0.25rem;
+  min-width: 44px;
+  min-height: 44px;
+  transition: transform 0.15s ease;
   flex-shrink: 0;
+  line-height: 1;
+  margin: 0;
+  vertical-align: middle;
 }
 
 .finder-description-toggle:hover {
-  background: #e2e8f0;
   color: #475569;
+}
+
+.finder-description-toggle.rotated {
+  transform: rotate(90deg);
 }
 
 @media (max-width: 768px) {

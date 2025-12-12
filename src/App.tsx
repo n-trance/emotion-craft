@@ -1,9 +1,23 @@
 import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import "./App.css";
 import type { DimensionType } from "./data/types";
-import { BASE_EMOTIONS, BASE_EMOTION_COLORS, BASE_EMOTION_SHAPES, DEFAULT_EMOTION_COLOR, UI_COLORS, type FilterType } from "./constants/emotions";
-import { getDimensionDisplayName, formatDimensionTooltip, getDimensionValueLabel } from "./utils/dimensions";
-import { getEmotionDimension, generateGradientFromRatios } from "./utils/emotions";
+import {
+  BASE_EMOTIONS,
+  BASE_EMOTION_COLORS,
+  BASE_EMOTION_SHAPES,
+  DEFAULT_EMOTION_COLOR,
+  UI_COLORS,
+  type FilterType,
+} from "./constants/emotions";
+import {
+  getDimensionDisplayName,
+  formatDimensionTooltip,
+  getDimensionValueLabel,
+} from "./utils/dimensions";
+import {
+  getEmotionDimension,
+  generateGradientFromRatios,
+} from "./utils/emotions";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Header } from "./components/Header";
 import { StickyCraftingBar } from "./components/StickyCraftingBar";
@@ -152,7 +166,9 @@ interface BlendedEmotionShapeProps {
   emotion: string;
   color: string;
   size?: number;
-  getBaseEmotionRatios: (emotion: string) => Array<{ emotion: string; ratio: number }>;
+  getBaseEmotionRatios: (
+    emotion: string
+  ) => Array<{ emotion: string; ratio: number }>;
 }
 
 const BlendedEmotionShape = ({
@@ -199,37 +215,39 @@ const BlendedEmotionShape = ({
       )}
 
       {/* Render secondary shapes with reduced opacity based on ratio */}
-      {ratios.slice(1).map((ratioData: { emotion: string; ratio: number }, index: number) => {
-        const shape = BASE_EMOTION_SHAPES[ratioData.emotion];
-        if (!shape || ratioData.ratio < 0.1) return null; // Skip very small contributions
+      {ratios
+        .slice(1)
+        .map((ratioData: { emotion: string; ratio: number }, index: number) => {
+          const shape = BASE_EMOTION_SHAPES[ratioData.emotion];
+          if (!shape || ratioData.ratio < 0.1) return null; // Skip very small contributions
 
-        const secondaryColor = BASE_EMOTION_COLORS[ratioData.emotion] || color;
-        // Opacity based on ratio, with minimum of 0.2 and maximum of 0.6 for secondary shapes
-        const opacity = Math.max(0.2, Math.min(0.6, ratioData.ratio * 2));
+          const secondaryColor =
+            BASE_EMOTION_COLORS[ratioData.emotion] || color;
+          // Opacity based on ratio, with minimum of 0.2 and maximum of 0.6 for secondary shapes
+          const opacity = Math.max(0.2, Math.min(0.6, ratioData.ratio * 2));
 
-        // Offset secondary shapes slightly for visual blending
-        const offsetX = (index % 2 === 0 ? 1 : -1) * (ratioData.ratio * 2);
-        const offsetY = (index % 3 === 0 ? 1 : -1) * (ratioData.ratio * 1.5);
-        const transform = `translate(${offsetX}, ${offsetY})`;
+          // Offset secondary shapes slightly for visual blending
+          const offsetX = (index % 2 === 0 ? 1 : -1) * (ratioData.ratio * 2);
+          const offsetY = (index % 3 === 0 ? 1 : -1) * (ratioData.ratio * 1.5);
+          const transform = `translate(${offsetX}, ${offsetY})`;
 
-        return (
-          <g key={ratioData.emotion} opacity={opacity}>
-            {renderSingleShape(
-              shape,
-              secondaryColor,
-              secondaryColor,
-              strokeWidth,
-              1,
-              transform,
-              ratioData.emotion
-            )}
-          </g>
-        );
-      })}
+          return (
+            <g key={ratioData.emotion} opacity={opacity}>
+              {renderSingleShape(
+                shape,
+                secondaryColor,
+                secondaryColor,
+                strokeWidth,
+                1,
+                transform,
+                ratioData.emotion
+              )}
+            </g>
+          );
+        })}
     </svg>
   );
 };
-
 
 export const App = () => {
   const [discoveredEmotions, setDiscoveredEmotions] = useState<Set<string>>(
@@ -251,7 +269,9 @@ export const App = () => {
   const [unexploredEmotions, setUnexploredEmotions] = useState<Set<string>>(
     new Set()
   );
-  const [selectedEmotionPopup, setSelectedEmotionPopup] = useState<string | null>(null);
+  const [selectedEmotionPopup, setSelectedEmotionPopup] = useState<
+    string | null
+  >(null);
   const [triedCombinations, setTriedCombinations] = useState<Set<string>>(
     new Set()
   );
@@ -270,36 +290,53 @@ export const App = () => {
   const [showFeelingsModal, setShowFeelingsModal] = useState(false);
   const [showStatesModal, setShowStatesModal] = useState(false);
   const [showTypeModal, setShowTypeModal] = useState(false);
-  const [sortOrder, setSortOrder] = useState<"alphabetical" | "available">("alphabetical");
-  const [showCombinableIndicators, setShowCombinableIndicators] = useState<boolean>(true);
+  const [sortOrder, setSortOrder] = useState<"alphabetical" | "available">(
+    "alphabetical"
+  );
+  const [showCombinableIndicators, setShowCombinableIndicators] =
+    useState<boolean>(true);
   const autoCombineTriggered = useRef(false);
   const craftingAreaRef = useRef<HTMLDivElement>(null);
   const resultDisplayRef = useRef<HTMLDivElement>(null);
-  const [recentlyAddedEmotion, setRecentlyAddedEmotion] = useState<string | null>(null);
+  const [recentlyAddedEmotion, setRecentlyAddedEmotion] = useState<
+    string | null
+  >(null);
   const [mode, setMode] = useState<"view" | "craft">("craft");
   const [isLoading, setIsLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(true);
-  
+
   // Lazy load data structures
-  const [feelingDescriptions, setFeelingDescriptions] = useState<{ [key: string]: string } | null>(null);
+  const [feelingDescriptions, setFeelingDescriptions] = useState<{
+    [key: string]: string;
+  } | null>(null);
   const [emotionDimensions, setEmotionDimensions] = useState<{
     [key: string]: { [dimension in DimensionType]?: string };
   } | null>(null);
-  const [dimensionTooltips, setDimensionTooltips] = useState<{ [key in DimensionType]: string } | null>(null);
-  const [dimensionValues, setDimensionValues] = useState<{ [key in DimensionType]: string[] } | null>(null);
+  const [dimensionTooltips, setDimensionTooltips] = useState<
+    { [key in DimensionType]: string } | null
+  >(null);
+  const [dimensionValues, setDimensionValues] = useState<
+    { [key in DimensionType]: string[] } | null
+  >(null);
   const [showFinderModal, setShowFinderModal] = useState(false);
-  const [finderSelections, setFinderSelections] = useState<Partial<Record<DimensionType, string>>>({});
+  const [finderSelections, setFinderSelections] = useState<
+    Partial<Record<DimensionType, string>>
+  >({});
   const [finderResults, setFinderResults] = useState<string[]>([]);
   const [finderTypeFilter, setFinderTypeFilter] = useState<FilterType>("all");
-  const [finderMode, setFinderMode] = useState<"dimensions" | "text">("dimensions");
+  const [finderMode, setFinderMode] = useState<"dimensions" | "text">(
+    "dimensions"
+  );
   const [finderTextSearch, setFinderTextSearch] = useState("");
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
-  
-// Lazy-loaded modals chunk
-const Modals = lazy(() => import("./components/Modals"));
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Lazy-loaded modals chunk
+  const Modals = lazy(() => import("./components/Modals"));
   // Lazy load emotion graph - built after first render to show loading screen first
   const [emotionGraph, setEmotionGraph] = useState<any>(null);
-  
+
   // Load data files dynamically
   useEffect(() => {
     const loadData = async () => {
@@ -308,19 +345,19 @@ const Modals = lazy(() => import("./components/Modals"));
           { FEELING_DESCRIPTIONS },
           { EMOTION_DIMENSIONS },
           { DIMENSION_TOOLTIPS, DIMENSION_VALUES },
-          { buildFeelingGraph }
+          { buildFeelingGraph },
         ] = await Promise.all([
           import("./data/feelingDescriptions"),
           import("./data/emotionDimensions"),
           import("./data/dimensionTooltips"),
-          import("./buildFeelingGraph")
+          import("./buildFeelingGraph"),
         ]);
-        
+
         setFeelingDescriptions(FEELING_DESCRIPTIONS);
         setEmotionDimensions(EMOTION_DIMENSIONS);
         setDimensionTooltips(DIMENSION_TOOLTIPS);
         setDimensionValues(DIMENSION_VALUES);
-        
+
         // Build graph after data is loaded
         const graph = buildFeelingGraph(BASE_EMOTIONS);
         setEmotionGraph(graph);
@@ -330,12 +367,14 @@ const Modals = lazy(() => import("./components/Modals"));
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 
   // Cache for base emotion ratios to avoid repeated deep traversals
-  const baseRatioCache = useRef<Map<string, Array<{ emotion: string; ratio: number }>>>(new Map());
+  const baseRatioCache = useRef<
+    Map<string, Array<{ emotion: string; ratio: number }>>
+  >(new Map());
 
   // Clear caches when graph changes
   useEffect(() => {
@@ -363,7 +402,7 @@ const Modals = lazy(() => import("./components/Modals"));
     if (cached) return cached;
 
     if (!emotionGraph) return [];
-    
+
     if (BASE_EMOTIONS.includes(emotion)) {
       const ratios = [{ emotion, ratio: 1 }];
       baseRatioCache.current.set(emotion, ratios);
@@ -456,22 +495,22 @@ const Modals = lazy(() => import("./components/Modals"));
       // Search through all emotions/feelings/states
       if (emotionGraph) {
         const allItems = new Set<string>();
-        
+
         // Add base emotions
-        BASE_EMOTIONS.forEach(emotion => allItems.add(emotion));
-        
+        BASE_EMOTIONS.forEach((emotion) => allItems.add(emotion));
+
         // Add all discovered emotions
-        discoveredEmotions.forEach(emotion => allItems.add(emotion));
-        
+        discoveredEmotions.forEach((emotion) => allItems.add(emotion));
+
         // Add all emotions from the graph
-        Object.keys(emotionGraph).forEach(emotion => allItems.add(emotion));
+        Object.keys(emotionGraph).forEach((emotion) => allItems.add(emotion));
 
         results = Array.from(allItems).filter((item) => {
           // Search in name
           if (item.toLowerCase().includes(searchQuery)) {
             return true;
           }
-          
+
           // Search in description
           if (feelingDescriptions) {
             const description = feelingDescriptions[item]?.toLowerCase() || "";
@@ -479,7 +518,7 @@ const Modals = lazy(() => import("./components/Modals"));
               return true;
             }
           }
-          
+
           return false;
         });
       }
@@ -488,7 +527,10 @@ const Modals = lazy(() => import("./components/Modals"));
       if (finderTypeFilter !== "all") {
         results = results.filter((emotion) => {
           const itemType = getItemType(emotion);
-          if (finderTypeFilter === "emotion" || finderTypeFilter === "feeling") {
+          if (
+            finderTypeFilter === "emotion" ||
+            finderTypeFilter === "feeling"
+          ) {
             return itemType === "emotion" || itemType === "feeling";
           }
           return itemType === finderTypeFilter;
@@ -516,8 +558,10 @@ const Modals = lazy(() => import("./components/Modals"));
     }
 
     let results = Object.entries(emotionDimensions)
-      .filter(([, dims]) =>
-        activeFilters.length === 0 || activeFilters.every(([dim, val]) => dims[dim] === val)
+      .filter(
+        ([, dims]) =>
+          activeFilters.length === 0 ||
+          activeFilters.every(([dim, val]) => dims[dim] === val)
       )
       .map(([emotion]) => emotion);
 
@@ -566,7 +610,9 @@ const Modals = lazy(() => import("./components/Modals"));
     onClick?: () => void;
   }) => {
     const isBase = BASE_EMOTIONS.includes(emotion);
-    const ratios = isBase ? [{ emotion, ratio: 1 }] : getBaseEmotionRatios(emotion);
+    const ratios = isBase
+      ? [{ emotion, ratio: 1 }]
+      : getBaseEmotionRatios(emotion);
     const gradient = isBase ? undefined : generateGradientFromRatios(ratios);
     const border = getEmotionBorderColor(emotion);
 
@@ -666,7 +712,7 @@ const Modals = lazy(() => import("./components/Modals"));
   // Load from localStorage - wait for graph to be ready
   useEffect(() => {
     if (!emotionGraph) return; // Wait for graph to be built
-    
+
     const saved = localStorage.getItem("discoveredEmotions");
     if (saved) {
       const parsed = JSON.parse(saved) as string[];
@@ -704,7 +750,7 @@ const Modals = lazy(() => import("./components/Modals"));
         setTriedCombinations(new Set(parsed));
       }
     }
-    
+
     // Start fade out after initialization
     setTimeout(() => {
       setIsLoading(false);
@@ -741,11 +787,11 @@ const Modals = lazy(() => import("./components/Modals"));
       // Check if adding this emotion to the slots would result in a valid combination
       const testSlots = [...slots, otherEmotion];
       const result = combineMultipleEmotions(testSlots);
-      
+
       // Only add if result is valid and not circular (result is not one of the inputs)
       if (result && !testSlots.includes(result)) {
         combinable.add(otherEmotion);
-        
+
         // Check if any combination in the path is unexplored
         let hasUnexplored = false;
         // Check combinations between the new emotion and each slot item
@@ -760,7 +806,7 @@ const Modals = lazy(() => import("./components/Modals"));
             break;
           }
         }
-        
+
         if (hasUnexplored) {
           unexplored.add(otherEmotion);
         }
@@ -772,22 +818,21 @@ const Modals = lazy(() => import("./components/Modals"));
 
   const handleEmotionClick = (emotion: string, event?: React.MouseEvent) => {
     // Check if right-click or modifier key (Cmd/Ctrl) is pressed (overrides mode)
-    const isViewDetails = event?.button === 2 || 
-                          event?.ctrlKey || 
-                          event?.metaKey;
-    
+    const isViewDetails =
+      event?.button === 2 || event?.ctrlKey || event?.metaKey;
+
     if (isViewDetails) {
       event?.preventDefault();
       viewFeelingDetails(emotion);
       return;
     }
-    
+
     // Check current mode
     if (mode === "view") {
       viewFeelingDetails(emotion);
       return;
     }
-    
+
     // Craft mode: Add emotion to crafting slots
     // Prevent adding emotion if it's already in crafting slots
     if (craftingSlots.includes(emotion)) {
@@ -830,7 +875,8 @@ const Modals = lazy(() => import("./components/Modals"));
   const handleEmotionLeave = () => {
     // Restore combinable emotions based on crafting slots when hover ends
     if (craftingSlots.length > 0) {
-      const { combinable, unexplored } = getCombinableEmotionsWithAll(craftingSlots);
+      const { combinable, unexplored } =
+        getCombinableEmotionsWithAll(craftingSlots);
       setCombinableEmotions(combinable);
       setUnexploredEmotions(unexplored);
     }
@@ -857,7 +903,7 @@ const Modals = lazy(() => import("./components/Modals"));
     // Find the parent combination that created this feeling
     const parents = emotionGraph.getParents(emotion);
     let combination: string[] = [];
-    
+
     if (parents.length > 0) {
       // Use the first parent pair (most direct combination)
       const [parent1, parent2] = parents[0];
@@ -866,23 +912,23 @@ const Modals = lazy(() => import("./components/Modals"));
       // Base emotions don't have parents, so no combination to show
       combination = [];
     }
-    
+
     // Set the result display
     setLastResult(emotion);
     setLastCombination(combination);
     setIsNewDiscovery(false);
-    
+
     // Clear crafting slots to show this is a view, not a craft
     setCraftingSlots([]);
     setHasAttemptedCombine(false);
-    
+
     // Always scroll to result display when viewing details
     setTimeout(() => {
       if (resultDisplayRef.current) {
         const elementTop = resultDisplayRef.current.offsetTop;
         window.scrollTo({
           top: elementTop,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }, 100);
@@ -993,7 +1039,7 @@ const Modals = lazy(() => import("./components/Modals"));
           const elementTop = resultDisplayRef.current.offsetTop;
           window.scrollTo({
             top: elementTop,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
       }, 100);
@@ -1041,7 +1087,8 @@ const Modals = lazy(() => import("./components/Modals"));
       setUnexploredEmotions(new Set());
     } else {
       // Update combinable emotions when crafting slots change
-      const { combinable, unexplored } = getCombinableEmotionsWithAll(craftingSlots);
+      const { combinable, unexplored } =
+        getCombinableEmotionsWithAll(craftingSlots);
       setCombinableEmotions(combinable);
       setUnexploredEmotions(unexplored);
       if (!highlightedEmotion) {
@@ -1049,25 +1096,6 @@ const Modals = lazy(() => import("./components/Modals"));
       }
     }
   }, [craftingSlots.length, craftingSlots.join(",")]);
-
-  // Auto-combine disabled - user must manually click combine button
-  // useEffect(() => {
-  //   if (
-  //     craftingSlots.length === 2 &&
-  //     !isCombining &&
-  //     !hasAttemptedCombine &&
-  //     !lastResult &&
-  //     !autoCombineTriggered.current
-  //   ) {
-  //     autoCombineTriggered.current = true;
-  //     handleCombine();
-  //   }
-  //   // Reset trigger when slots are cleared
-  //   if (craftingSlots.length === 0) {
-  //     autoCombineTriggered.current = false;
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [craftingSlots.length]);
 
   const resetProgress = () => {
     if (
@@ -1173,7 +1201,12 @@ const Modals = lazy(() => import("./components/Modals"));
         ) as DimensionType[]) {
           const selectedValue = selectedDimensionValues[dimension];
           if (selectedValue) {
-            const emotionValue = getEmotionDimension(emotion, dimension, getBaseEmotionComponents, emotionDimensions);
+            const emotionValue = getEmotionDimension(
+              emotion,
+              dimension,
+              getBaseEmotionComponents,
+              emotionDimensions
+            );
             // If this dimension has a filter and the emotion doesn't match, exclude it
             if (emotionValue !== selectedValue) {
               return false;
@@ -1204,7 +1237,9 @@ const Modals = lazy(() => import("./components/Modals"));
   );
 
   const baseEmotionsListFiltered = filterEmotions(filteredBaseEmotions);
-  const discoveredEmotionsListFiltered = filterEmotions(filteredDiscoveredEmotions);
+  const discoveredEmotionsListFiltered = filterEmotions(
+    filteredDiscoveredEmotions
+  );
 
   // Apply sorting
   const sortEmotions = (emotions: string[]): string[] => {
@@ -1215,12 +1250,14 @@ const Modals = lazy(() => import("./components/Modals"));
       return [...emotions].sort((a, b) => {
         const aInSlots = craftingSlots.includes(a);
         const aCombinable = combinableEmotions.has(a);
-        const aAvailable = craftingSlots.length === 0 || aInSlots || aCombinable;
-        
+        const aAvailable =
+          craftingSlots.length === 0 || aInSlots || aCombinable;
+
         const bInSlots = craftingSlots.includes(b);
         const bCombinable = combinableEmotions.has(b);
-        const bAvailable = craftingSlots.length === 0 || bInSlots || bCombinable;
-        
+        const bAvailable =
+          craftingSlots.length === 0 || bInSlots || bCombinable;
+
         if (aAvailable && !bAvailable) return -1;
         if (!aAvailable && bAvailable) return 1;
         // If both available or both unavailable, sort alphabetically
@@ -1231,13 +1268,25 @@ const Modals = lazy(() => import("./components/Modals"));
 
   const baseEmotionsList = sortEmotions(baseEmotionsListFiltered);
   const discoveredEmotionsList = sortEmotions(discoveredEmotionsListFiltered);
-  
+
   // Separate feelings from states
-  const feelingsList = sortEmotions(discoveredEmotionsList.filter((e) => getItemType(e) === "feeling"));
-  const statesList = sortEmotions(discoveredEmotionsList.filter((e) => getItemType(e) === "state"));
+  const feelingsList = sortEmotions(
+    discoveredEmotionsList.filter((e) => getItemType(e) === "feeling")
+  );
+  const statesList = sortEmotions(
+    discoveredEmotionsList.filter((e) => getItemType(e) === "state")
+  );
 
   // Loading screen component
-  if (showLoading || isLoading || !feelingDescriptions || !emotionDimensions || !dimensionTooltips || !dimensionValues || !emotionGraph) {
+  if (
+    showLoading ||
+    isLoading ||
+    !feelingDescriptions ||
+    !emotionDimensions ||
+    !dimensionTooltips ||
+    !dimensionValues ||
+    !emotionGraph
+  ) {
     return <LoadingScreen isLoading={isLoading} showLoading={showLoading} />;
   }
 
@@ -1262,9 +1311,9 @@ const Modals = lazy(() => import("./components/Modals"));
           onClear={clearAll}
           onCombine={handleCombine}
           onScrollToCrafting={() => {
-            craftingAreaRef.current?.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start' 
+            craftingAreaRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
             });
           }}
           isCombining={isCombining}
@@ -1275,7 +1324,7 @@ const Modals = lazy(() => import("./components/Modals"));
         <section className="section crafting-section">
           <h2>Crafting Area</h2>
           <p className="crafting-instructions">
-            {mode === "view" 
+            {mode === "view"
               ? "Click emotions from below to view their details, or right-click/Cmd+click to view in any mode."
               : "Click emotions from below to add them to crafting slots, then combine them!"}
           </p>
@@ -1422,7 +1471,8 @@ const Modals = lazy(() => import("./components/Modals"));
                               <EmotionShape
                                 emotion={emotion}
                                 color={
-                                  BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR
+                                  BASE_EMOTION_COLORS[emotion] ||
+                                  DEFAULT_EMOTION_COLOR
                                 }
                                 size={16}
                               />
@@ -1434,7 +1484,8 @@ const Modals = lazy(() => import("./components/Modals"));
                                 style={{
                                   width: `${ratio * 100}%`,
                                   backgroundColor:
-                                    BASE_EMOTION_COLORS[emotion] || DEFAULT_EMOTION_COLOR,
+                                    BASE_EMOTION_COLORS[emotion] ||
+                                    DEFAULT_EMOTION_COLOR,
                                 }}
                               />
                             </div>
@@ -1465,11 +1516,19 @@ const Modals = lazy(() => import("./components/Modals"));
                 ];
                 const dimensionValues = dimensions
                   .map((dim) => {
-                    const value = getEmotionDimension(lastResult, dim, getBaseEmotionComponents, emotionDimensions);
+                    const value = getEmotionDimension(
+                      lastResult,
+                      dim,
+                      getBaseEmotionComponents,
+                      emotionDimensions
+                    );
                     return value ? { dimension: dim, value } : null;
                   })
-                  .filter((item): item is { dimension: DimensionType; value: string } =>
-                    item !== null
+                  .filter(
+                    (
+                      item
+                    ): item is { dimension: DimensionType; value: string } =>
+                      item !== null
                   );
 
                 // Always show dimensions section if there are any dimension values or type
@@ -1477,19 +1536,18 @@ const Modals = lazy(() => import("./components/Modals"));
                 if (dimensionValues.length > 0 || itemType) {
                   return (
                     <div className="result-dimensions">
-                      <div className="result-dimensions-label">
-                        Dimensions:
-                      </div>
+                      <div className="result-dimensions-label">Dimensions:</div>
                       <div className="result-dimensions-tags">
                         {/* Add Type as first dimension */}
-                        <span 
+                        <span
                           className="result-dimension-tag"
                           onClick={() => setShowTypeModal(true)}
                           style={{ cursor: "pointer" }}
                         >
                           <span className="dimension-name">Type:</span>{" "}
                           <span className="dimension-value">
-                            {itemType.charAt(0).toUpperCase() + itemType.slice(1)}
+                            {itemType.charAt(0).toUpperCase() +
+                              itemType.slice(1)}
                           </span>
                         </span>
                         {dimensionValues.map(({ dimension, value }) => (
@@ -1530,10 +1588,32 @@ const Modals = lazy(() => import("./components/Modals"));
         <section className="section">
           <div className="section-header">
             <h2
-              style={{ cursor: "pointer", marginBottom: 0 }}
+              style={{
+                cursor: "pointer",
+                marginBottom: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.125rem",
+              }}
               onClick={() => setDimensionsExpanded(!dimensionsExpanded)}
             >
-              Filter {dimensionsExpanded ? "▼" : "▶"}
+              Filter
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: dimensionsExpanded ? "rotate(90deg)" : "none",
+                  fontSize: "1.25rem",
+                  lineHeight: 1,
+                  padding: "0.625rem 0.625rem 0.625rem 0.25rem",
+                  minWidth: "44px",
+                  minHeight: "44px",
+                  transition: "transform 0.15s ease",
+                }}
+              >
+                ›
+              </span>
             </h2>
             {(getSelectedCount() > 0 || typeFilter !== "all") && (
               <button
@@ -1624,19 +1704,10 @@ const Modals = lazy(() => import("./components/Modals"));
                       return (
                         <button
                           key={filterValue}
+                          className={`filter-button ${
+                            isSelected ? "active" : ""
+                          }`}
                           onClick={() => setTypeFilter(filterValue)}
-                          style={{
-                            padding: "0.375rem 0.75rem",
-                            fontSize: "0.8125rem",
-                            backgroundColor: isSelected ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND_GRAY,
-                            color: isSelected ? "white" : "#374151",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontWeight: "500",
-                            transition: "all 0.2s ease",
-                            textTransform: "capitalize",
-                          }}
                         >
                           {filterValue}
                         </button>
@@ -1645,96 +1716,86 @@ const Modals = lazy(() => import("./components/Modals"));
                   )}
                 </div>
               </div>
-              {dimensionValues && (Object.keys(dimensionValues) as DimensionType[]).map(
-                (dimension) => (
-                  <div key={dimension} style={{ position: "relative" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      <label
+              {dimensionValues &&
+                (Object.keys(dimensionValues) as DimensionType[]).map(
+                  (dimension) => (
+                    <div key={dimension} style={{ position: "relative" }}>
+                      <div
                         style={{
-                          fontSize: "0.75rem",
-                          color: "#64748b",
-                          fontWeight: "600",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        {getDimensionDisplayName(dimension)}
-                      </label>
-                      <button
-                        onClick={() => setSelectedDimensionModal(dimension)}
-                        style={{
-                          cursor: "pointer",
-                          fontSize: "0.7rem",
-                          color: "#94a3b8",
-                          width: "14px",
-                          height: "14px",
-                          borderRadius: "50%",
-                          border: "1px solid #94a3b8",
-                          display: "inline-flex",
+                          display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          lineHeight: 1,
-                          background: "transparent",
-                          padding: 0,
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = "#667eea";
-                          e.currentTarget.style.color = "#667eea";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "#94a3b8";
-                          e.currentTarget.style.color = "#94a3b8";
+                          gap: "4px",
+                          marginBottom: "0.5rem",
                         }}
                       >
-                        ?
-                      </button>
+                        <label
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "#64748b",
+                            fontWeight: "600",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          {getDimensionDisplayName(dimension)}
+                        </label>
+                        <button
+                          onClick={() => setSelectedDimensionModal(dimension)}
+                          style={{
+                            cursor: "pointer",
+                            fontSize: "0.7rem",
+                            color: "#94a3b8",
+                            width: "14px",
+                            height: "14px",
+                            borderRadius: "50%",
+                            border: "1px solid #94a3b8",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            lineHeight: 1,
+                            background: "transparent",
+                            padding: 0,
+                            transition: "all 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = "#667eea";
+                            e.currentTarget.style.color = "#667eea";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "#94a3b8";
+                            e.currentTarget.style.color = "#94a3b8";
+                          }}
+                        >
+                          ?
+                        </button>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        {dimensionValues &&
+                          dimensionValues[dimension].map((value) => {
+                            const isSelected =
+                              selectedDimensionValues[dimension] === value;
+                            return (
+                              <button
+                                key={value}
+                                className={`filter-button ${isSelected ? "active" : ""}`}
+                                onClick={() =>
+                                  toggleDimensionValue(dimension, value)
+                                }
+                              >
+                                {getDimensionValueLabel(dimension, value)}
+                              </button>
+                            );
+                          })}
+                      </div>
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      {dimensionValues && dimensionValues[dimension].map((value) => {
-                        const isSelected =
-                          selectedDimensionValues[dimension] === value;
-                        return (
-                          <button
-                            key={value}
-                            onClick={() =>
-                              toggleDimensionValue(dimension, value)
-                            }
-                            style={{
-                              padding: "0.375rem 0.75rem",
-                              fontSize: "0.8125rem",
-                              backgroundColor: isSelected
-                                ? "#667eea"
-                                : "#e5e7eb",
-                              color: isSelected ? "white" : "#374151",
-                              border: "none",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontWeight: "500",
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            {getDimensionValueLabel(dimension, value)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )
-              )}
+                  )
+                )}
             </div>
           )}
         </section>
@@ -1768,20 +1829,35 @@ const Modals = lazy(() => import("./components/Modals"));
                 gap: "8px",
                 position: "relative",
               }}
-            >
-            </div>
+            ></div>
             <div className="section-actions">
-              <div className="sort-controls" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontSize: "0.8125rem", color: "#64748b", fontWeight: "500" }}>Sort:</span>
+              <div
+                className="sort-controls"
+                style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.8125rem",
+                    color: "#64748b",
+                    fontWeight: "500",
+                  }}
+                >
+                  Sort:
+                </span>
                 <button
-                  className={`sort-button ${sortOrder === "alphabetical" ? "active" : ""}`}
+                  className={`sort-button ${
+                    sortOrder === "alphabetical" ? "active" : ""
+                  }`}
                   onClick={() => setSortOrder("alphabetical")}
                   style={{
                     padding: "0.375rem 0.75rem",
                     fontSize: "0.8125rem",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
-                    backgroundColor: sortOrder === "alphabetical" ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND,
+                    backgroundColor:
+                      sortOrder === "alphabetical"
+                        ? UI_COLORS.PRIMARY
+                        : UI_COLORS.BACKGROUND,
                     color: sortOrder === "alphabetical" ? "#ffffff" : "#64748b",
                     cursor: "pointer",
                     fontWeight: "500",
@@ -1791,14 +1867,19 @@ const Modals = lazy(() => import("./components/Modals"));
                   A-Z
                 </button>
                 <button
-                  className={`sort-button ${sortOrder === "available" ? "active" : ""}`}
+                  className={`sort-button ${
+                    sortOrder === "available" ? "active" : ""
+                  }`}
                   onClick={() => setSortOrder("available")}
                   style={{
                     padding: "0.375rem 0.75rem",
                     fontSize: "0.8125rem",
                     border: "1px solid #e2e8f0",
                     borderRadius: "4px",
-                    backgroundColor: sortOrder === "available" ? UI_COLORS.PRIMARY : UI_COLORS.BACKGROUND,
+                    backgroundColor:
+                      sortOrder === "available"
+                        ? UI_COLORS.PRIMARY
+                        : UI_COLORS.BACKGROUND,
                     color: sortOrder === "available" ? "#ffffff" : "#64748b",
                     cursor: "pointer",
                     fontWeight: "500",
@@ -1807,11 +1888,23 @@ const Modals = lazy(() => import("./components/Modals"));
                 >
                   Available
                 </button>
-                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.8125rem", color: "#64748b", marginLeft: "0.75rem" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    cursor: "pointer",
+                    fontSize: "0.8125rem",
+                    color: "#64748b",
+                    marginLeft: "0.75rem",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={showCombinableIndicators}
-                    onChange={(e) => setShowCombinableIndicators(e.target.checked)}
+                    onChange={(e) =>
+                      setShowCombinableIndicators(e.target.checked)
+                    }
                     style={{ cursor: "pointer" }}
                   />
                   Show hint
@@ -1826,7 +1919,17 @@ const Modals = lazy(() => import("./components/Modals"));
             </p>
           )}
           <div style={{ marginBottom: "1.5rem" }}>
-            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3
+              style={{
+                marginBottom: "0.75rem",
+                fontSize: "1rem",
+                fontWeight: "600",
+                color: "#0f172a",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               Emotions ({baseEmotionsList.length})
               <button
                 onClick={() => setShowEmotionsModal(true)}
@@ -1859,24 +1962,33 @@ const Modals = lazy(() => import("./components/Modals"));
               </button>
             </h3>
             <div className="emotions-grid">
-            {baseEmotionsList
-                .map((emotion) => {
-                  const isHighlighted = craftingSlots.includes(emotion);
-                  const isCombinable = combinableEmotions.has(emotion);
-                  const isUnexplored = unexploredEmotions.has(emotion);
-                  const hasOptions = hasCombinableOptions(emotion);
-                  // Check if item should be faded out (selected items fade out, or not available when crafting)
-                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
-                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
+              {baseEmotionsList.map((emotion) => {
+                const isHighlighted = craftingSlots.includes(emotion);
+                const isCombinable = combinableEmotions.has(emotion);
+                const isUnexplored = unexploredEmotions.has(emotion);
+                const hasOptions = hasCombinableOptions(emotion);
+                // Check if item should be faded out (selected items fade out, or not available when crafting)
+                const isUnavailable =
+                  craftingSlots.length > 0 &&
+                  (isHighlighted || (!isHighlighted && !isCombinable));
+                const isDisabled =
+                  craftingSlots.length > 0 && !isHighlighted && !isCombinable;
 
                 return (
-                  <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
+                  <div
+                    key={emotion}
+                    className={`emotion-wrapper ${
+                      isUnavailable ? "unavailable" : ""
+                    }`}
+                  >
                     <button
                       className={`base-emotion ${
                         isHighlighted ? "highlighted" : ""
                       } ${isCombinable ? "combinable" : ""} ${
                         isUnexplored ? "unexplored" : ""
-                      } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                      } ${hasOptions ? "has-options" : ""} ${
+                        isUnavailable ? "unavailable" : ""
+                      }`}
                       disabled={isDisabled}
                       onClick={(e) => handleEmotionClick(emotion, e)}
                       onContextMenu={(e) => {
@@ -1962,7 +2074,17 @@ const Modals = lazy(() => import("./components/Modals"));
             </div>
           </div>
           <div style={{ marginTop: "2rem" }}>
-            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3
+              style={{
+                marginBottom: "0.75rem",
+                fontSize: "1rem",
+                fontWeight: "600",
+                color: "#0f172a",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               Feelings ({feelingsList.length})
               <button
                 onClick={() => setShowFeelingsModal(true)}
@@ -1995,25 +2117,34 @@ const Modals = lazy(() => import("./components/Modals"));
               </button>
             </h3>
             <div className="emotions-list">
-            {feelingsList.length > 0 ? (
-              feelingsList
-                .map((emotion) => {
+              {feelingsList.length > 0 ? (
+                feelingsList.map((emotion) => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
                   const hasOptions = hasCombinableOptions(emotion);
                   // Check if item should be faded out (selected items or not available when crafting)
-                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
-                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
+                  const isUnavailable =
+                    craftingSlots.length > 0 &&
+                    (isHighlighted || (!isHighlighted && !isCombinable));
+                  const isDisabled =
+                    craftingSlots.length > 0 && !isHighlighted && !isCombinable;
 
                   return (
-                    <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
+                    <div
+                      key={emotion}
+                      className={`emotion-wrapper ${
+                        isUnavailable ? "unavailable" : ""
+                      }`}
+                    >
                       <button
                         className={`discovered-emotion ${
                           isHighlighted ? "highlighted" : ""
                         } ${isCombinable ? "combinable" : ""} ${
                           isUnexplored ? "unexplored" : ""
-                        } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                        } ${hasOptions ? "has-options" : ""} ${
+                          isUnavailable ? "unavailable" : ""
+                        }`}
                         disabled={isDisabled}
                         onClick={(e) => handleEmotionClick(emotion, e)}
                         onContextMenu={(e) => {
@@ -2106,28 +2237,38 @@ const Modals = lazy(() => import("./components/Modals"));
                                   className="emotion-badge combinable-badge"
                                   title="Can combine with other emotions"
                                 >
-                                !
-                              </span>
-                            );
+                                  !
+                                </span>
+                              );
+                            }
+                            // Don't show badge if all combinations are finished
                           }
-                          // Don't show badge if all combinations are finished
+                          // If hasOptions is false, don't show any badge (nothing to combine with)
                         }
-                        // If hasOptions is false, don't show any badge (nothing to combine with)
-                      }
-                      return null;
-                    })()}
+                        return null;
+                      })()}
                     </div>
                   );
                 })
-            ) : (
-              <p className="empty-state">
-                Combine feelings to discover new ones!
-              </p>
-            )}
+              ) : (
+                <p className="empty-state">
+                  Combine feelings to discover new ones!
+                </p>
+              )}
             </div>
           </div>
           <div style={{ marginTop: "2rem" }}>
-            <h3 style={{ marginBottom: "0.75rem", fontSize: "1rem", fontWeight: "600", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3
+              style={{
+                marginBottom: "0.75rem",
+                fontSize: "1rem",
+                fontWeight: "600",
+                color: "#0f172a",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
               State ({statesList.length})
               <button
                 onClick={() => setShowStatesModal(true)}
@@ -2160,25 +2301,34 @@ const Modals = lazy(() => import("./components/Modals"));
               </button>
             </h3>
             <div className="emotions-list">
-            {statesList.length > 0 ? (
-              statesList
-                .map((emotion) => {
+              {statesList.length > 0 ? (
+                statesList.map((emotion) => {
                   const isHighlighted = craftingSlots.includes(emotion);
                   const isCombinable = combinableEmotions.has(emotion);
                   const isUnexplored = unexploredEmotions.has(emotion);
                   const hasOptions = hasCombinableOptions(emotion);
                   // Check if item should be faded out (selected items or not available when crafting)
-                  const isUnavailable = craftingSlots.length > 0 && (isHighlighted || (!isHighlighted && !isCombinable));
-                  const isDisabled = craftingSlots.length > 0 && !isHighlighted && !isCombinable;
+                  const isUnavailable =
+                    craftingSlots.length > 0 &&
+                    (isHighlighted || (!isHighlighted && !isCombinable));
+                  const isDisabled =
+                    craftingSlots.length > 0 && !isHighlighted && !isCombinable;
 
                   return (
-                    <div key={emotion} className={`emotion-wrapper ${isUnavailable ? "unavailable" : ""}`}>
+                    <div
+                      key={emotion}
+                      className={`emotion-wrapper ${
+                        isUnavailable ? "unavailable" : ""
+                      }`}
+                    >
                       <button
                         className={`discovered-emotion ${
                           isHighlighted ? "highlighted" : ""
                         } ${isCombinable ? "combinable" : ""} ${
                           isUnexplored ? "unexplored" : ""
-                        } ${hasOptions ? "has-options" : ""} ${isUnavailable ? "unavailable" : ""}`}
+                        } ${hasOptions ? "has-options" : ""} ${
+                          isUnavailable ? "unavailable" : ""
+                        }`}
                         disabled={isDisabled}
                         onClick={(e) => handleEmotionClick(emotion, e)}
                         onContextMenu={(e) => {
@@ -2281,14 +2431,14 @@ const Modals = lazy(() => import("./components/Modals"));
                         // If hasOptions is false, don't show any badge (nothing to combine with)
                         return null;
                       })()}
-                  </div>
-                );
-              })
-            ) : (
-              <p className="empty-state">
-                Combine feelings to discover new states!
-              </p>
-            )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="empty-state">
+                  Combine feelings to discover new states!
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -2297,7 +2447,10 @@ const Modals = lazy(() => import("./components/Modals"));
       {/* Centered Emotion Popup Overlay */}
       {selectedEmotionPopup && (
         <div className="emotion-popup-overlay" onClick={closeEmotionPopup}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="emotion-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button className="emotion-popup-close" onClick={closeEmotionPopup}>
               ×
             </button>
@@ -2313,18 +2466,35 @@ const Modals = lazy(() => import("./components/Modals"));
 
       {/* Emotions Modal */}
       {showEmotionsModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowEmotionsModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowEmotionsModal(false)}>
+        <div
+          className="emotion-popup-overlay"
+          onClick={() => setShowEmotionsModal(false)}
+        >
+          <div
+            className="emotion-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="emotion-popup-close"
+              onClick={() => setShowEmotionsModal(false)}
+            >
               ×
             </button>
             <div className="emotion-popup-title">Emotions</div>
             <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
-                Emotions are complex psychological states that involve subjective experience, physiological responses, and behavioral expressions. They are fundamental human experiences that arise from our interactions with the world around us.
+                Emotions are complex psychological states that involve
+                subjective experience, physiological responses, and behavioral
+                expressions. They are fundamental human experiences that arise
+                from our interactions with the world around us.
               </p>
               <p style={{ marginBottom: 0 }}>
-                Base emotions like <strong>Joy</strong>, <strong>Trust</strong>, <strong>Fear</strong>, <strong>Surprise</strong>, <strong>Sadness</strong>, <strong>Disgust</strong>, <strong>Anger</strong>, and <strong>Anticipation</strong> form the foundation of our emotional landscape and can be combined to create more nuanced feelings and states.
+                Base emotions like <strong>Joy</strong>, <strong>Trust</strong>,{" "}
+                <strong>Fear</strong>, <strong>Surprise</strong>,{" "}
+                <strong>Sadness</strong>, <strong>Disgust</strong>,{" "}
+                <strong>Anger</strong>, and <strong>Anticipation</strong> form
+                the foundation of our emotional landscape and can be combined to
+                create more nuanced feelings and states.
               </p>
             </div>
           </div>
@@ -2333,18 +2503,32 @@ const Modals = lazy(() => import("./components/Modals"));
 
       {/* Feelings Modal */}
       {showFeelingsModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowFeelingsModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowFeelingsModal(false)}>
+        <div
+          className="emotion-popup-overlay"
+          onClick={() => setShowFeelingsModal(false)}
+        >
+          <div
+            className="emotion-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="emotion-popup-close"
+              onClick={() => setShowFeelingsModal(false)}
+            >
               ×
             </button>
             <div className="emotion-popup-title">Feelings</div>
             <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
-                Feelings are the personal, subjective experience of emotions combined with individual context and meaning. They represent how we interpret and experience emotions in our daily lives.
+                Feelings are the personal, subjective experience of emotions
+                combined with individual context and meaning. They represent how
+                we interpret and experience emotions in our daily lives.
               </p>
               <p style={{ marginBottom: 0 }}>
-                Feelings are often more complex than base emotions, as they can be combinations of multiple emotions or emotions filtered through our personal experiences, memories, and cultural background.
+                Feelings are often more complex than base emotions, as they can
+                be combinations of multiple emotions or emotions filtered
+                through our personal experiences, memories, and cultural
+                background.
               </p>
             </div>
           </div>
@@ -2353,18 +2537,32 @@ const Modals = lazy(() => import("./components/Modals"));
 
       {/* States Modal */}
       {showStatesModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowStatesModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowStatesModal(false)}>
+        <div
+          className="emotion-popup-overlay"
+          onClick={() => setShowStatesModal(false)}
+        >
+          <div
+            className="emotion-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="emotion-popup-close"
+              onClick={() => setShowStatesModal(false)}
+            >
               ×
             </button>
             <div className="emotion-popup-title">State</div>
             <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
-                States are more stable and enduring emotional conditions that represent a particular way of being or existing. Unlike fleeting emotions or feelings, states often describe a sustained condition or quality of experience.
+                States are more stable and enduring emotional conditions that
+                represent a particular way of being or existing. Unlike fleeting
+                emotions or feelings, states often describe a sustained
+                condition or quality of experience.
               </p>
               <p style={{ marginBottom: 0 }}>
-                They can be the result of combining multiple emotions and feelings, creating a more persistent emotional landscape that shapes how we perceive and interact with the world.
+                They can be the result of combining multiple emotions and
+                feelings, creating a more persistent emotional landscape that
+                shapes how we perceive and interact with the world.
               </p>
             </div>
           </div>
@@ -2373,25 +2571,55 @@ const Modals = lazy(() => import("./components/Modals"));
 
       {/* Emotion Finder Modal */}
       {showFinderModal && (
-        <div className="emotion-popup-overlay" onClick={() => setShowFinderModal(false)}>
-          <div className="emotion-popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="emotion-popup-close" onClick={() => setShowFinderModal(false)}>
+        <div
+          className="emotion-popup-overlay"
+          onClick={() => setShowFinderModal(false)}
+        >
+          <div
+            className="emotion-popup-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="emotion-popup-close"
+              onClick={() => setShowFinderModal(false)}
+            >
               ×
             </button>
             <div className="emotion-popup-title">Emotion Finder</div>
-            <div className="emotion-popup-description" style={{ display: "grid", gap: "0.75rem" }}>
+            <div
+              className="emotion-popup-description"
+              style={{ display: "grid", gap: "0.75rem" }}
+            >
               {/* Mode Toggle */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                <label style={{ fontWeight: 700, fontSize: "1rem", color: "#0f172a" }}>Search Mode</label>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
+                <label
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                    color: "#0f172a",
+                  }}
+                >
+                  Search Mode
+                </label>
                 <div className="finder-mode-toggle">
                   <button
-                    className={`finder-mode-button ${finderMode === "dimensions" ? "active" : ""}`}
+                    className={`finder-mode-button ${
+                      finderMode === "dimensions" ? "active" : ""
+                    }`}
                     onClick={() => setFinderMode("dimensions")}
                   >
                     Dimensions
                   </button>
                   <button
-                    className={`finder-mode-button ${finderMode === "text" ? "active" : ""}`}
+                    className={`finder-mode-button ${
+                      finderMode === "text" ? "active" : ""
+                    }`}
                     onClick={() => setFinderMode("text")}
                   >
                     Description
@@ -2402,15 +2630,39 @@ const Modals = lazy(() => import("./components/Modals"));
               {/* Dimensions Mode */}
               {finderMode === "dimensions" && (
                 <>
-                  <p style={{ marginBottom: 0, fontSize: "0.875rem", color: "#64748b" }}>
-                    Pick dimension values to see emotions that match those attributes. Leave any blank to ignore it.
+                  <p
+                    style={{
+                      marginBottom: 0,
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                    }}
+                  >
+                    Pick dimension values to see emotions that match those
+                    attributes. Leave any blank to ignore it.
                   </p>
                   {/* Type Filter */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                      <label style={{ fontWeight: 700, fontSize: "0.9rem" }}>Type</label>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.35rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.125rem",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <label style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                        Type
+                      </label>
                       <button
-                        className="finder-description-toggle"
+                        className={`finder-description-toggle ${
+                          expandedDescriptions.has("type") ? "rotated" : ""
+                        }`}
                         onClick={() => {
                           const key = "type";
                           setExpandedDescriptions((prev) => {
@@ -2425,13 +2677,19 @@ const Modals = lazy(() => import("./components/Modals"));
                         }}
                         aria-label="Toggle description"
                       >
-                        {expandedDescriptions.has("type") ? "−" : "+"}
+                        ›
                       </button>
                     </div>
-                    <p className={`finder-description-text ${expandedDescriptions.has("type") ? "expanded" : ""}`}>
-                      <strong>Emotion:</strong> Base psychological states (Joy, Trust, Fear, etc.).{" "}
-                      <strong>Feeling:</strong> Personal, subjective experiences of emotions.{" "}
-                      <strong>State:</strong> More stable, enduring emotional conditions.
+                    <p
+                      className={`finder-description-text ${
+                        expandedDescriptions.has("type") ? "expanded" : ""
+                      }`}
+                    >
+                      <strong>Emotion:</strong> Base psychological states (Joy,
+                      Trust, Fear, etc.). <strong>Feeling:</strong> Personal,
+                      subjective experiences of emotions.{" "}
+                      <strong>State:</strong> More stable, enduring emotional
+                      conditions.
                     </p>
                     <div
                       style={{
@@ -2440,15 +2698,19 @@ const Modals = lazy(() => import("./components/Modals"));
                         gap: "0.35rem",
                       }}
                     >
-                      {(["all", "emotion", "feeling", "state"] as FilterType[]).map((type) => {
+                      {(
+                        ["all", "emotion", "feeling", "state"] as FilterType[]
+                      ).map((type) => {
                         const isActive = finderTypeFilter === type;
                         return (
                           <button
                             key={type}
-                            className={`filter-button ${isActive ? "active" : ""}`}
+                            className={`filter-button ${
+                              isActive ? "active" : ""
+                            }`}
                             onClick={() => setFinderTypeFilter(type)}
                           >
-                            {type === "all" ? "All" : type.charAt(0).toUpperCase() + type.slice(1)}
+                            {type}
                           </button>
                         );
                       })}
@@ -2456,13 +2718,33 @@ const Modals = lazy(() => import("./components/Modals"));
                   </div>
                   <div style={{ display: "grid", gap: "0.75rem" }}>
                     {finderDimensions.map((dimension) => (
-                      <div key={dimension} style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                          <label style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                      <div
+                        key={dimension}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.35rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.125rem",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <label
+                            style={{ fontWeight: 700, fontSize: "0.9rem" }}
+                          >
                             {getDimensionDisplayName(dimension)}
                           </label>
                           <button
-                            className="finder-description-toggle"
+                            className={`finder-description-toggle ${
+                              expandedDescriptions.has(dimension)
+                                ? "rotated"
+                                : ""
+                            }`}
                             onClick={() => {
                               setExpandedDescriptions((prev) => {
                                 const next = new Set(prev);
@@ -2476,15 +2758,22 @@ const Modals = lazy(() => import("./components/Modals"));
                             }}
                             aria-label="Toggle description"
                           >
-                            {expandedDescriptions.has(dimension) ? "−" : "+"}
+                            ›
                           </button>
                         </div>
-                        {dimensionTooltips &&
-                          dimensionTooltips[dimension] && (
-                            <p className={`finder-description-text ${expandedDescriptions.has(dimension) ? "expanded" : ""}`}>
-                              {dimensionTooltips[dimension].split("Example:")[0].trim()}
-                            </p>
-                          )}
+                        {dimensionTooltips && dimensionTooltips[dimension] && (
+                          <p
+                            className={`finder-description-text ${
+                              expandedDescriptions.has(dimension)
+                                ? "expanded"
+                                : ""
+                            }`}
+                          >
+                            {dimensionTooltips[dimension]
+                              .split("Example:")[0]
+                              .trim()}
+                          </p>
+                        )}
                         <div
                           style={{
                             display: "flex",
@@ -2493,11 +2782,14 @@ const Modals = lazy(() => import("./components/Modals"));
                           }}
                         >
                           {(dimensionValues?.[dimension] || []).map((val) => {
-                            const isActive = finderSelections[dimension] === val;
+                            const isActive =
+                              finderSelections[dimension] === val;
                             return (
                               <button
                                 key={val}
-                                className={`filter-button ${isActive ? "active" : ""}`}
+                                className={`filter-button ${
+                                  isActive ? "active" : ""
+                                }`}
                                 onClick={() =>
                                   setFinderSelections((prev) => ({
                                     ...prev,
@@ -2519,8 +2811,15 @@ const Modals = lazy(() => import("./components/Modals"));
               {/* Description Mode */}
               {finderMode === "text" && (
                 <>
-                  <p style={{ marginBottom: 0, fontSize: "0.875rem", color: "#64748b" }}>
-                    Search for emotions, feelings, or states by name or description.
+                  <p
+                    style={{
+                      marginBottom: 0,
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                    }}
+                  >
+                    Search for emotions, feelings, or states by name or
+                    description.
                   </p>
                   <div
                     style={{
@@ -2530,7 +2829,10 @@ const Modals = lazy(() => import("./components/Modals"));
                       flexWrap: "wrap",
                     }}
                   >
-                    <div className="finder-text-search-container" style={{ flex: "1 1 auto", minWidth: "200px" }}>
+                    <div
+                      className="finder-text-search-container"
+                      style={{ flex: "1 1 auto", minWidth: "200px" }}
+                    >
                       <input
                         type="text"
                         className="finder-text-search-input"
@@ -2548,7 +2850,11 @@ const Modals = lazy(() => import("./components/Modals"));
                         </button>
                       )}
                     </div>
-                    <button className="reset-button" onClick={resetEmotionFinder} style={{ flexShrink: 0 }}>
+                    <button
+                      className="reset-button"
+                      onClick={resetEmotionFinder}
+                      style={{ flexShrink: 0 }}
+                    >
                       Clear
                     </button>
                   </div>
@@ -2582,7 +2888,9 @@ const Modals = lazy(() => import("./components/Modals"));
                       : "No matches yet. Start typing to search."}
                   </p>
                 ) : (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}
+                  >
                     {finderResults.map((emotion) => (
                       <EmotionChip
                         key={emotion}
@@ -2620,7 +2928,6 @@ const Modals = lazy(() => import("./components/Modals"));
           getFeelingDescription={getFeelingDescription}
         />
       </Suspense>
-
     </div>
   );
 };
