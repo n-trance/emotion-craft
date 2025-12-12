@@ -60,11 +60,13 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">{selectedEmotionPopup}</div>
-            <div className="emotion-popup-description">
-              <p style={{ marginBottom: 0 }}>
-                {getFeelingDescription(selectedEmotionPopup)}
-              </p>
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">{selectedEmotionPopup}</div>
+              <div className="emotion-popup-description">
+                <p style={{ marginBottom: 0 }}>
+                  {getFeelingDescription(selectedEmotionPopup)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -86,8 +88,9 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">Emotions</div>
-            <div className="emotion-popup-description">
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Emotions</div>
+              <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
                 Emotions are complex psychological states that involve subjective
                 experience, physiological responses, and behavioral expressions.
@@ -102,6 +105,7 @@ export const Modals: FC<ModalsProps> = ({
                 the foundation of our emotional landscape and can be combined to
                 create more nuanced feelings and states.
               </p>
+              </div>
             </div>
           </div>
         </div>
@@ -123,8 +127,9 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">Feelings</div>
-            <div className="emotion-popup-description">
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Feelings</div>
+              <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
                 Feelings are the personal, subjective experiences that arise
                 when we interpret and make sense of our emotions. Unlike
@@ -137,6 +142,7 @@ export const Modals: FC<ModalsProps> = ({
                 trust, love, and joy filtered through appreciation and
                 recognition of kindness.
               </p>
+              </div>
             </div>
           </div>
         </div>
@@ -158,8 +164,9 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">States</div>
-            <div className="emotion-popup-description">
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">States</div>
+              <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
                 States are more stable and enduring emotional conditions that
                 shape our ongoing experience. They influence how we perceive and
@@ -170,6 +177,7 @@ export const Modals: FC<ModalsProps> = ({
                 representing a settled way of being rather than a fleeting
                 emotional response.
               </p>
+              </div>
             </div>
           </div>
         </div>
@@ -191,8 +199,9 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">Type</div>
-            <div className="emotion-popup-description">
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Type</div>
+              <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
                 The Type field categorizes emotional experiences into three
                 distinct categories:
@@ -219,6 +228,7 @@ export const Modals: FC<ModalsProps> = ({
                 sustained condition or quality of experience that shapes how we
                 perceive and interact with the world.
               </p>
+              </div>
             </div>
           </div>
         </div>
@@ -240,8 +250,9 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">Type</div>
-            <div className="emotion-popup-description">
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Type</div>
+              <div className="emotion-popup-description">
               <p style={{ marginBottom: "1rem" }}>
                 The Type field categorizes emotional experiences into three
                 distinct categories:
@@ -268,6 +279,7 @@ export const Modals: FC<ModalsProps> = ({
                 sustained condition or quality of experience that shapes how we
                 perceive and interact with the world.
               </p>
+              </div>
             </div>
           </div>
         </div>
@@ -289,13 +301,15 @@ export const Modals: FC<ModalsProps> = ({
             >
               ×
             </button>
-            <div className="emotion-popup-title">
-              {getDimensionDisplayName(selectedDimensionModal)}
-            </div>
-            <div className="emotion-popup-description">
-              {dimensionTooltips && selectedDimensionModal
-                ? formatDimensionTooltip(dimensionTooltips[selectedDimensionModal])
-                : null}
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">
+                {getDimensionDisplayName(selectedDimensionModal)}
+              </div>
+              <div className="emotion-popup-description">
+                {dimensionTooltips && selectedDimensionModal
+                  ? formatDimensionTooltip(dimensionTooltips[selectedDimensionModal])
+                  : null}
+              </div>
             </div>
           </div>
         </div>

@@ -2585,11 +2585,12 @@ export const App = () => {
             >
               ×
             </button>
-            <div className="emotion-popup-title">Emotion Finder</div>
-            <div
-              className="emotion-popup-description"
-              style={{ display: "grid", gap: "0.75rem" }}
-            >
+            <div className="emotion-popup-content-inner">
+              <div className="emotion-popup-title">Emotion Finder</div>
+              <div
+                className="emotion-popup-description"
+                style={{ display: "grid", gap: "1rem" }}
+              >
               {/* Mode Toggle */}
               <div
                 style={{
@@ -2645,7 +2646,7 @@ export const App = () => {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "0.35rem",
+                      gap: "0.5rem",
                     }}
                   >
                     <div
@@ -2680,17 +2681,15 @@ export const App = () => {
                         ›
                       </button>
                     </div>
-                    <p
-                      className={`finder-description-text ${
-                        expandedDescriptions.has("type") ? "expanded" : ""
-                      }`}
-                    >
-                      <strong>Emotion:</strong> Base psychological states (Joy,
-                      Trust, Fear, etc.). <strong>Feeling:</strong> Personal,
-                      subjective experiences of emotions.{" "}
-                      <strong>State:</strong> More stable, enduring emotional
-                      conditions.
-                    </p>
+                    {expandedDescriptions.has("type") && (
+                      <p className="finder-description-text">
+                        <strong>Emotion:</strong> Base psychological states (Joy,
+                        Trust, Fear, etc.). <strong>Feeling:</strong> Personal,
+                        subjective experiences of emotions.{" "}
+                        <strong>State:</strong> More stable, enduring emotional
+                        conditions.
+                      </p>
+                    )}
                     <div
                       style={{
                         display: "flex",
@@ -2716,14 +2715,14 @@ export const App = () => {
                       })}
                     </div>
                   </div>
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
+                  <div style={{ display: "grid", gap: "1rem" }}>
                     {finderDimensions.map((dimension) => (
                       <div
                         key={dimension}
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "0.35rem",
+                          gap: "0.5rem",
                         }}
                       >
                         <div
@@ -2761,19 +2760,15 @@ export const App = () => {
                             ›
                           </button>
                         </div>
-                        {dimensionTooltips && dimensionTooltips[dimension] && (
-                          <p
-                            className={`finder-description-text ${
-                              expandedDescriptions.has(dimension)
-                                ? "expanded"
-                                : ""
-                            }`}
-                          >
-                            {dimensionTooltips[dimension]
-                              .split("Example:")[0]
-                              .trim()}
-                          </p>
-                        )}
+                        {dimensionTooltips &&
+                          dimensionTooltips[dimension] &&
+                          expandedDescriptions.has(dimension) && (
+                            <p className="finder-description-text">
+                              {dimensionTooltips[dimension]
+                                .split("Example:")[0]
+                                .trim()}
+                            </p>
+                          )}
                         <div
                           style={{
                             display: "flex",
@@ -2901,6 +2896,7 @@ export const App = () => {
                   </div>
                 )}
               </div>
+            </div>
             </div>
           </div>
         </div>
