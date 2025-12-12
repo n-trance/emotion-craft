@@ -2610,10 +2610,12 @@ export const App = () => {
               ×
             </button>
             <div className="emotion-popup-content-inner">
-              <div className="emotion-popup-title">Emotion Finder</div>
+              <div className="emotion-popup-title" style={{ marginBottom: "0.75rem" }}>
+                Emotion Finder
+              </div>
               <div
                 className="emotion-popup-description"
-                style={{ display: "grid", gap: "1rem" }}
+                style={{ display: "grid", gap: "1rem", marginTop: 0 }}
               >
               {/* Mode Toggle */}
               <div
@@ -2670,7 +2672,7 @@ export const App = () => {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "0.5rem",
+                      gap: 0,
                     }}
                   >
                     <div
@@ -2679,9 +2681,10 @@ export const App = () => {
                         alignItems: "center",
                         gap: "0.125rem",
                         flexWrap: "wrap",
+                        marginBottom: 0,
                       }}
                     >
-                      <label style={{ fontWeight: 700, fontSize: "0.9rem" }}>
+                      <label style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: 0 }}>
                         Type
                       </label>
                       <button
@@ -2706,13 +2709,23 @@ export const App = () => {
                       </button>
                     </div>
                     {expandedDescriptions.has("type") && (
-                      <p className="finder-description-text">
-                        <strong>Emotion:</strong> Base psychological states (Joy,
-                        Trust, Fear, etc.). <strong>Feeling:</strong> Personal,
-                        subjective experiences of emotions.{" "}
-                        <strong>State:</strong> More stable, enduring emotional
-                        conditions.
-                      </p>
+                      <div className="finder-description-text" style={{ marginTop: 0 }}>
+                        <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+                          <strong>Emotion:</strong> Base psychological states (Joy,
+                          Trust, Fear, etc.). These are the fundamental building blocks
+                          of emotional experience.
+                        </p>
+                        <p style={{ marginTop: 0, marginBottom: "0.5rem" }}>
+                          <strong>Feeling:</strong> Personal, subjective experiences of
+                          emotions. Feelings are how we personally experience and
+                          interpret emotions in our lives.
+                        </p>
+                        <p style={{ marginTop: 0, marginBottom: 0 }}>
+                          <strong>State:</strong> More stable, enduring emotional
+                          conditions. States persist over longer periods and represent
+                          sustained emotional patterns.
+                        </p>
+                      </div>
                     )}
                     <div
                       style={{
@@ -2746,7 +2759,7 @@ export const App = () => {
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "0.5rem",
+                          gap: 0,
                         }}
                       >
                         <div
@@ -2755,10 +2768,11 @@ export const App = () => {
                             alignItems: "center",
                             gap: "0.125rem",
                             flexWrap: "wrap",
+                            marginBottom: 0,
                           }}
                         >
                           <label
-                            style={{ fontWeight: 700, fontSize: "0.9rem" }}
+                            style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: 0 }}
                           >
                             {getDimensionDisplayName(dimension)}
                           </label>
@@ -2787,11 +2801,9 @@ export const App = () => {
                         {dimensionTooltips &&
                           dimensionTooltips[dimension] &&
                           expandedDescriptions.has(dimension) && (
-                            <p className="finder-description-text">
-                              {dimensionTooltips[dimension]
-                                .split("Example:")[0]
-                                .trim()}
-                            </p>
+                            <div className="finder-description-text" style={{ marginTop: 0 }}>
+                              {formatDimensionTooltip(dimensionTooltips[dimension])}
+                            </div>
                           )}
                         <div
                           style={{

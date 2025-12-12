@@ -2023,22 +2023,32 @@ button,
   color: #64748b;
   line-height: 1.5;
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.finder-description-text p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.finder-description-text p:not(:last-child) {
+  margin-bottom: 0.5rem;
 }
 
 .finder-description-toggle {
   background: none;
   border: none;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 1.25rem;
   font-weight: 400;
   color: #64748b;
-  padding: 0.625rem 0.625rem 0.625rem 0.25rem;
-  min-width: 44px;
-  min-height: 44px;
+  padding: 0.25rem 0.25rem 0.25rem 0.125rem;
+  min-width: 32px;
+  min-height: 32px;
   transition: transform 0.15s ease;
   flex-shrink: 0;
   line-height: 1;
